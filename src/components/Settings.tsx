@@ -4,6 +4,8 @@ import {
   Card,
   Divider,
   Heading,
+  useTheme,
+  View,
 } from "@aws-amplify/ui-react";
 import { AuthUser } from "aws-amplify/auth";
 import { signOut } from "aws-amplify/auth";
@@ -23,22 +25,40 @@ export default function SettingsPage(props: {
   user: AuthUser;
   onFinished: () => void;
 }) {
+  const { tokens } = useTheme();
+
   const handleSuccess = () => {
     alert("success!");
   };
 
   return (
-    <Card>
-      <Heading>{props.user.signInDetails?.loginId}</Heading>
-      <AccountSettings.ChangePassword onSuccess={handleSuccess} />
-      <Divider style={{ margin: "20px" }} />
-      <SignOutButton />
-      <Divider style={{ margin: "20px" }} />
-      <AccountSettings.DeleteUser onSuccess={handleSuccess} />
-      <Divider style={{ margin: "20px" }} />
-      <Button variation="warning" isFullWidth onClick={props.onFinished}>
-        Back
-      </Button>
-    </Card>
+    <View>
+      <Card variation="elevated" borderRadius={tokens.radii.large}>
+        <Heading>{props.user.signInDetails?.loginId}</Heading>
+        <AccountSettings.ChangePassword onSuccess={handleSuccess} />
+        <Divider
+          marginBottom={tokens.space.medium}
+          paddingBottom={tokens.space.medium}
+        />
+        <SignOutButton />
+        <Divider
+          marginBottom={tokens.space.medium}
+          paddingBottom={tokens.space.medium}
+        />
+        <AccountSettings.DeleteUser onSuccess={handleSuccess} />
+        <Divider
+          marginBottom={tokens.space.medium}
+          paddingBottom={tokens.space.medium}
+        />
+        <Button
+          variation="primary"
+          colorTheme="info"
+          isFullWidth
+          onClick={props.onFinished}
+        >
+          Back
+        </Button>
+      </Card>
+    </View>
   );
 }

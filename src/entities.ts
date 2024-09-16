@@ -14,7 +14,9 @@ export type CountdownEntity = {
 
 export const listCountdowns = async (): Promise<CountdownEntity[]> => {
   console.log({ models: client.models });
-  const { data: countdowns, errors } = await client.models.Countdown.list();
+  const { data: countdowns, errors } = await client.models.Countdown.list({
+    limit: 10000,
+  });
   if (errors) throw new Error(errors.map((e) => e.message).join("\n"));
   return countdowns;
 };

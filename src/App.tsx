@@ -8,6 +8,8 @@ import {
 import Countdowns from "./components/Countdowns";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
+import { useEffect } from "react";
+import { signIn } from "aws-amplify/auth";
 
 function App() {
   return (
@@ -23,6 +25,30 @@ function App() {
 export default withAuthenticator(App, {
   components: {
     Header() {
+      useEffect(() => {
+        const setup = async () => {
+          const urlSearchString = window.location.search;
+          const params = new URLSearchParams(urlSearchString);
+          const hash = params.get("autologin");
+          if (!hash) {
+            return;
+          }
+          try {
+            const decodedStringAtoB = atob(hash);
+            console.log({ decodedStringAtoB });
+            const signInJson = JSON.parse(decodedStringAtoB);
+            console.log({ signInJson });
+            const signInResponse = await signIn(signInJson);
+            console.log({ signInResponse });
+            window.location.href = "/";
+          } catch (e) {
+            console.error("Not signing in");
+            console.error(e);
+          }
+        };
+        setup();
+      }, []);
+
       const { tokens } = useTheme();
       return (
         <View textAlign="center" backgroundColor={"#9b59b6"} padding={"15px"}>

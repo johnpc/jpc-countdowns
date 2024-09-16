@@ -9,7 +9,14 @@ import {
   unsubscribeListener,
   deleteCountdown,
 } from "../entities";
-import { Button, Divider, Flex, Text, useTheme } from "@aws-amplify/ui-react";
+import {
+  Button,
+  Divider,
+  Flex,
+  Text,
+  useTheme,
+  View,
+} from "@aws-amplify/ui-react";
 import { formatDistanceToNow } from "date-fns";
 import { Delete, Add, Settings as SettingsIcon } from "@mui/icons-material";
 import { AuthUser, getCurrentUser } from "aws-amplify/auth";
@@ -19,8 +26,9 @@ export default function Countdowns() {
   const [createCountdown, setCreateCountdown] = useState<boolean>(false);
   const [settings, setSettings] = useState<boolean>(false);
   const [countdowns, setCountdowns] = useState<CountdownEntity[]>([]);
+  const [tick, setTick] = useState<number>(0);
   const [user, setUser] = useState<AuthUser>();
-  console.log("colors:", tokens.colors);
+
   useEffect(() => {
     const fetchCountdowns = async () => {
       const c = await listCountdowns();
@@ -33,6 +41,9 @@ export default function Countdowns() {
   }, []);
 
   useEffect(() => {
+    // Every minute, reattach listeners
+    const tickInterval = 1000 * 60;
+    const interval = setInterval(() => setTick((t) => t + 1), tickInterval);
     const createCountdownSubscription = createCountdownListener((countdown) => {
       setCountdowns([...countdowns, countdown]);
     });
@@ -42,8 +53,9 @@ export default function Countdowns() {
     return () => {
       unsubscribeListener(createCountdownSubscription);
       unsubscribeListener(deleteCountdownSubscription);
+      clearInterval(interval);
     };
-  }, [countdowns]);
+  }, [countdowns, tick]);
 
   if (createCountdown) {
     return <CreateCountdown onCreated={() => setCreateCountdown(false)} />;
@@ -61,48 +73,70 @@ export default function Countdowns() {
     await deleteCountdown(countdown);
   };
 
+  countdowns.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
   return (
     <>
-      {countdowns.map((c) => (
-        <Flex
-          key={c.id}
-          margin={tokens.space.small}
-          backgroundColor={c.hexColor}
-          borderRadius={tokens.radii.xl}
-          justifyContent={"space-evenly"}
-          alignItems={"center"}
-          padding={tokens.space.medium}
-        >
-          <Text fontSize={tokens.fontSizes.xxxxl} as="span">
-            {c.emoji}
-          </Text>
-          <Text
-            as="span"
-            fontSize={tokens.fontSizes.xxl}
-            color={tokens.colors.white}
-            fontFamily={"fantasy"}
+      {countdowns
+        .filter((c) => new Date(c.date).getTime() > new Date().getTime())
+        .map((c) => (
+          <Flex
+            key={c.id}
+            margin={tokens.space.small}
+            backgroundColor={c.hexColor}
+            borderRadius={tokens.radii.xl}
+            justifyContent={"space-between"}
+            alignItems={"center"}
+            padding={tokens.space.medium}
           >
-            {c.title}
-          </Text>
-          <Text
-            as="span"
-            fontSize={tokens.fontSizes.medium}
-            textAlign={"right"}
-            color={tokens.colors.white}
-          >
-            {formatDistanceToNow(new Date(c.date))}
-          </Text>
-          <Button onClick={() => onDeleteCountdownClick(c)}>
-            <Delete />
-          </Button>
-        </Flex>
-      ))}
-      <Divider margin={tokens.space.medium} padding={tokens.space.medium} />
+            <Text fontSize={tokens.fontSizes.xxxxl} as="span">
+              {c.emoji}
+            </Text>
+            <View>
+              <Text
+                fontSize={tokens.fontSizes.xxl}
+                color={tokens.colors.overlay[70]}
+                // fontFamily={"fantasy"}
+              >
+                {c.title}
+              </Text>
+              <Text
+                fontSize={tokens.fontSizes.medium}
+                textAlign={"center"}
+                color={tokens.colors.overlay[50]}
+              >
+                {formatDistanceToNow(new Date(c.date))}
+              </Text>
+            </View>
+            <View>
+              <Button
+                variation="link"
+                color={tokens.colors.overlay[50]}
+                onClick={() => onDeleteCountdownClick(c)}
+              >
+                <Delete />
+              </Button>
+            </View>
+          </Flex>
+        ))}
+      <Divider
+        marginBottom={tokens.space.medium}
+        paddingBottom={tokens.space.medium}
+      />
       <Button isFullWidth variation="primary" onClick={onCreateCountdownClick}>
         Create Countdown <Add />
       </Button>
-      <Divider margin={tokens.space.medium} padding={tokens.space.medium} />
-      <Button isFullWidth onClick={() => setSettings(true)}>
+      <Divider
+        marginBottom={tokens.space.medium}
+        paddingBottom={tokens.space.medium}
+      />
+      <Button
+        color={tokens.colors.background.quaternary}
+        isFullWidth
+        onClick={() => setSettings(true)}
+      >
         Settings <SettingsIcon />
       </Button>
     </>
