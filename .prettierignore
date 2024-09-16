@@ -1,7 +1,11 @@
 .prettierignore
 .gitignore
+.eslintcache
+*.tsbuildinfo
 *.svg
 *.png
 *.webp
 .amplify/
 .husky/
+dist/
+ios/
