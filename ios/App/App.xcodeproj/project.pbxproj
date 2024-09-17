@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1D058EB02C98E5DB00BAFCE5 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D058EAF2C98E5DB00BAFCE5 /* WidgetKit.framework */; };
+		1D058EB22C98E5DB00BAFCE5 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D058EB12C98E5DB00BAFCE5 /* SwiftUI.framework */; };
+		1D058EB52C98E5DB00BAFCE5 /* JpcCountdownsWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D058EB42C98E5DB00BAFCE5 /* JpcCountdownsWidgetBundle.swift */; };
+		1D058EB72C98E5DB00BAFCE5 /* JpcCountdownsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D058EB62C98E5DB00BAFCE5 /* JpcCountdownsWidget.swift */; };
+		1D058EB92C98E5DC00BAFCE5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1D058EB82C98E5DC00BAFCE5 /* Assets.xcassets */; };
+		1D058EBD2C98E5DC00BAFCE5 /* JpcCountdownsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1D058EAE2C98E5DB00BAFCE5 /* JpcCountdownsWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -17,7 +23,40 @@
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		1D058EBB2C98E5DC00BAFCE5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1D058EAD2C98E5DA00BAFCE5;
+			remoteInfo = JpcCountdownsWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		1D058EBE2C98E5DC00BAFCE5 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1D058EBD2C98E5DC00BAFCE5 /* JpcCountdownsWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		1D058EAE2C98E5DB00BAFCE5 /* JpcCountdownsWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = JpcCountdownsWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D058EAF2C98E5DB00BAFCE5 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		1D058EB12C98E5DB00BAFCE5 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		1D058EB42C98E5DB00BAFCE5 /* JpcCountdownsWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JpcCountdownsWidgetBundle.swift; sourceTree = "<group>"; };
+		1D058EB62C98E5DB00BAFCE5 /* JpcCountdownsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JpcCountdownsWidget.swift; sourceTree = "<group>"; };
+		1D058EB82C98E5DC00BAFCE5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1D058EBA2C98E5DC00BAFCE5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1D058EC22C98E63800BAFCE5 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
+		1D058EC32C98E65400BAFCE5 /* JpcCountdownsWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JpcCountdownsWidgetExtension.entitlements; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -33,6 +72,15 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		1D058EAB2C98E5DA00BAFCE5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D058EB22C98E5DB00BAFCE5 /* SwiftUI.framework in Frameworks */,
+				1D058EB02C98E5DB00BAFCE5 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -44,10 +92,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1D058EB32C98E5DB00BAFCE5 /* JpcCountdownsWidget */ = {
+			isa = PBXGroup;
+			children = (
+				1D058EB42C98E5DB00BAFCE5 /* JpcCountdownsWidgetBundle.swift */,
+				1D058EB62C98E5DB00BAFCE5 /* JpcCountdownsWidget.swift */,
+				1D058EB82C98E5DC00BAFCE5 /* Assets.xcassets */,
+				1D058EBA2C98E5DC00BAFCE5 /* Info.plist */,
+			);
+			path = JpcCountdownsWidget;
+			sourceTree = "<group>";
+		};
 		27E2DDA53C4D2A4D1A88CE4A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */,
+				1D058EAF2C98E5DB00BAFCE5 /* WidgetKit.framework */,
+				1D058EB12C98E5DB00BAFCE5 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -55,7 +116,9 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
+				1D058EC32C98E65400BAFCE5 /* JpcCountdownsWidgetExtension.entitlements */,
 				504EC3061FED79650016851F /* App */,
+				1D058EB32C98E5DB00BAFCE5 /* JpcCountdownsWidget */,
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
@@ -66,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				1D058EAE2C98E5DB00BAFCE5 /* JpcCountdownsWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,6 +137,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				1D058EC22C98E63800BAFCE5 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -97,6 +162,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1D058EAD2C98E5DA00BAFCE5 /* JpcCountdownsWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D058EC12C98E5DC00BAFCE5 /* Build configuration list for PBXNativeTarget "JpcCountdownsWidgetExtension" */;
+			buildPhases = (
+				1D058EAA2C98E5DA00BAFCE5 /* Sources */,
+				1D058EAB2C98E5DA00BAFCE5 /* Frameworks */,
+				1D058EAC2C98E5DA00BAFCE5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JpcCountdownsWidgetExtension;
+			productName = JpcCountdownsWidgetExtension;
+			productReference = 1D058EAE2C98E5DB00BAFCE5 /* JpcCountdownsWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		504EC3031FED79650016851F /* App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
@@ -106,10 +188,12 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
+				1D058EBE2C98E5DC00BAFCE5 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				1D058EBC2C98E5DC00BAFCE5 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
@@ -122,9 +206,13 @@
 		504EC2FC1FED79650016851F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0920;
+				LastSwiftUpdateCheck = 1540;
 				LastUpgradeCheck = 0920;
 				TargetAttributes = {
+					1D058EAD2C98E5DA00BAFCE5 = {
+						CreatedOnToolsVersion = 15.4;
+						ProvisioningStyle = Automatic;
+					};
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
@@ -148,11 +236,20 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				1D058EAD2C98E5DA00BAFCE5 /* JpcCountdownsWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1D058EAC2C98E5DA00BAFCE5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D058EB92C98E5DC00BAFCE5 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -205,6 +302,15 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1D058EAA2C98E5DA00BAFCE5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D058EB52C98E5DB00BAFCE5 /* JpcCountdownsWidgetBundle.swift in Sources */,
+				1D058EB72C98E5DB00BAFCE5 /* JpcCountdownsWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -214,6 +320,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1D058EBC2C98E5DC00BAFCE5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1D058EAD2C98E5DA00BAFCE5 /* JpcCountdownsWidgetExtension */;
+			targetProxy = 1D058EBB2C98E5DC00BAFCE5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -235,6 +349,78 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		1D058EBF2C98E5DC00BAFCE5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_ENTITLEMENTS = JpcCountdownsWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JW5SC3NYUV;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JpcCountdownsWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = JpcCountdownsWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.johncorser.countdowns.JpcCountdownsWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1D058EC02C98E5DC00BAFCE5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_ENTITLEMENTS = JpcCountdownsWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JW5SC3NYUV;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JpcCountdownsWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = JpcCountdownsWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.johncorser.countdowns.JpcCountdownsWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -346,7 +532,9 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JW5SC3NYUV;
@@ -371,7 +559,9 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JW5SC3NYUV;
@@ -394,6 +584,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1D058EC12C98E5DC00BAFCE5 /* Build configuration list for PBXNativeTarget "JpcCountdownsWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1D058EBF2C98E5DC00BAFCE5 /* Debug */,
+				1D058EC02C98E5DC00BAFCE5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

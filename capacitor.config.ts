@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.johncorser.countdowns",
-  appName: "jpc-countdown",
+  appName: "jpc.countdowns",
   webDir: "dist",
   ios: {
     contentInset: "always",

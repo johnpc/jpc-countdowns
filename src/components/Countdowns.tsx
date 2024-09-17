@@ -20,6 +20,20 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { Delete, Add, Settings as SettingsIcon } from "@mui/icons-material";
 import { AuthUser, getCurrentUser } from "aws-amplify/auth";
+import { App as CapacitorApp } from "@capacitor/app";
+import { WidgetsBridgePlugin } from "capacitor-widgetsbridge-plugin";
+
+const WIDGET_PREFERENCES_GROUP = "group.com.johncorser.countdowns.prefs";
+const PREFERENCES_KEY = "countdownEntities";
+
+const setWidgetPreferences = async (entities: CountdownEntity[]) => {
+  await WidgetsBridgePlugin.setItem({
+    group: WIDGET_PREFERENCES_GROUP,
+    key: PREFERENCES_KEY,
+    value: JSON.stringify(entities),
+  });
+  await WidgetsBridgePlugin.reloadAllTimelines();
+};
 
 export default function Countdowns() {
   const { tokens } = useTheme();
@@ -35,6 +49,7 @@ export default function Countdowns() {
       const u = await getCurrentUser();
       setUser(u);
       setCountdowns(c);
+      setWidgetPreferences(c);
     };
 
     fetchCountdowns();
@@ -43,17 +58,31 @@ export default function Countdowns() {
   useEffect(() => {
     // Every minute, reattach listeners
     const tickInterval = 1000 * 60;
-    const interval = setInterval(() => setTick((t) => t + 1), tickInterval);
+    const interval = setInterval(() => setTick(() => tick + 1), tickInterval);
     const createCountdownSubscription = createCountdownListener((countdown) => {
-      setCountdowns([...countdowns, countdown]);
+      const updatedCountdowns = [...countdowns, countdown];
+      updatedCountdowns.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      setCountdowns(updatedCountdowns);
+      setWidgetPreferences(updatedCountdowns);
     });
     const deleteCountdownSubscription = deleteCountdownListener((countdown) => {
-      setCountdowns(countdowns.filter((c) => c.id !== countdown.id));
+      const updatedCountdowns = countdowns.filter((c) => c.id !== countdown.id);
+      setCountdowns(updatedCountdowns);
+      setWidgetPreferences(updatedCountdowns);
+    });
+    CapacitorApp.addListener("appStateChange", async ({ isActive }) => {
+      WidgetsBridgePlugin.reloadAllTimelines();
+      if (isActive) {
+        setTick(() => tick + 1);
+      }
     });
     return () => {
       unsubscribeListener(createCountdownSubscription);
       unsubscribeListener(deleteCountdownSubscription);
       clearInterval(interval);
+      CapacitorApp.removeAllListeners();
     };
   }, [countdowns, tick]);
 
@@ -98,7 +127,6 @@ export default function Countdowns() {
               <Text
                 fontSize={tokens.fontSizes.xxl}
                 color={tokens.colors.overlay[70]}
-                // fontFamily={"fantasy"}
               >
                 {c.title}
               </Text>

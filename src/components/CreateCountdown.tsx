@@ -1,4 +1,5 @@
 import { ChangeEvent, useState } from "react";
+import { endOfDay } from "date-fns";
 import { createCountdown } from "../entities";
 import {
   Button,
@@ -37,7 +38,7 @@ export default function CreateCountdown(props: { onCreated: () => void }) {
   };
 
   const onSetDate = (event: ChangeEvent<HTMLInputElement>) => {
-    setDate(new Date(event.target.value));
+    setDate(endOfDay(new Date(event.target.value)));
   };
 
   const onSetTitle = (event: ChangeEvent<HTMLInputElement>) => {

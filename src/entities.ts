@@ -18,7 +18,13 @@ export const listCountdowns = async (): Promise<CountdownEntity[]> => {
     limit: 10000,
   });
   if (errors) throw new Error(errors.map((e) => e.message).join("\n"));
-  return countdowns;
+  return countdowns.map((c) => ({
+    id: c.id,
+    emoji: c.emoji,
+    title: c.title,
+    date: c.date,
+    hexColor: c.hexColor,
+  }));
 };
 
 export const createCountdown = async (

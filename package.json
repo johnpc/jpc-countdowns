@@ -1,5 +1,5 @@
 {
-  "name": "jpc-countdown",
+  "name": "jpc.countdowns",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.3.1",
+    "@capacitor/app": "^6.0.1",
     "@capacitor/core": "^6.1.2",
     "@capacitor/ios": "^6.1.2",
     "@emoji-mart/data": "^1.2.1",
@@ -22,6 +23,7 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^6.1.0",
     "aws-amplify": "^6.6.0",
+    "capacitor-widgetsbridge-plugin": "^0.1.2",
     "date-fns": "^4.0.0",
     "emoji-mart": "^5.6.0",
     "react": "^18.3.1",
