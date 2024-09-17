@@ -4,6 +4,8 @@ import {
   Card,
   Divider,
   Heading,
+  Link,
+  Text,
   useTheme,
   View,
 } from "@aws-amplify/ui-react";
@@ -58,6 +60,14 @@ export default function SettingsPage(props: {
         >
           Back
         </Button>
+        <Divider
+          marginBottom={tokens.space.medium}
+          paddingBottom={tokens.space.medium}
+        />
+        <Text fontSize={tokens.fontSizes.small}>
+          For support, email{" "}
+          <Link href="mailto:john@johncorser.com">john@johncorser.com</Link>{" "}
+        </Text>
       </Card>
     </View>
   );

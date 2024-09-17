@@ -1,6 +1,7 @@
 import {
   Heading,
   Image,
+  Link,
   View,
   useTheme,
   withAuthenticator,
@@ -10,6 +11,7 @@ import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { useEffect } from "react";
 import { signIn } from "aws-amplify/auth";
+import { Capacitor } from "@capacitor/core";
 
 function App() {
   return (
@@ -67,5 +69,23 @@ export default withAuthenticator(App, {
         </View>
       );
     },
+    Footer: () => (
+      <div
+        style={{
+          textAlign: "center",
+        }}
+      >
+        {Capacitor.getPlatform() === "ios" ? null : (
+          <Link
+            href="https://apps.apple.com/us/app/jpc-countdown/id6689494969"
+            style={{
+              color: "white",
+            }}
+          >
+            Download the app for iOS devices
+          </Link>
+        )}
+      </div>
+    ),
   },
 });

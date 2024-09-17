@@ -2,7 +2,7 @@
 
 A dead-simple app for keeping track of what's coming up next in your life
 
-The app is available live at [https://countdowns.jpc.io](https://countdowns.jpc.io). You can download the app for iOS devices on the App Store: [COMING SOON].
+The app is available live at [https://countdowns.jpc.io](https://countdowns.jpc.io). You can download the app for iOS devices on the [App Store](https://apps.apple.com/us/app/jpc-countdown/id6689494969).
 
 ## Setup
 
