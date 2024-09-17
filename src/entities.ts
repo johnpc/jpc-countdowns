@@ -37,6 +37,21 @@ export const createCountdown = async (
   return newCountdown!;
 };
 
+export const updateCountdown = async (
+  countdown: CountdownEntity
+): Promise<CountdownEntity | undefined> => {
+  if (!countdown.id) {
+    console.log(`Cannot update countdown without id`, { countdown });
+    return;
+  }
+  const { data: newCountdown, errors } = await client.models.Countdown.update({
+    id: countdown.id!,
+    ...countdown,
+  });
+  if (errors) throw new Error(errors.map((e) => e.message).join("\n"));
+  return newCountdown!;
+};
+
 export const deleteCountdown = async (
   countdown: CountdownEntity
 ): Promise<void> => {
@@ -52,6 +67,20 @@ export const createCountdownListener = (
   fn: (countdownItem: CountdownEntity) => void
 ) => {
   const listener = client.models.Countdown.onCreate().subscribe({
+    next: async (countdown: Schema["Countdown"]["type"]) => {
+      fn(countdown);
+    },
+    error: (error: Error) => {
+      console.error("Subscription error", error);
+    },
+  });
+  return listener;
+};
+
+export const updateCountdownListener = (
+  fn: (countdownItem: CountdownEntity) => void
+) => {
+  const listener = client.models.Countdown.onUpdate().subscribe({
     next: async (countdown: Schema["Countdown"]["type"]) => {
       fn(countdown);
     },

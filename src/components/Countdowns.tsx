@@ -8,6 +8,7 @@ import {
   listCountdowns,
   unsubscribeListener,
   deleteCountdown,
+  updateCountdownListener,
 } from "../entities";
 import {
   Button,
@@ -17,7 +18,7 @@ import {
   useTheme,
   View,
 } from "@aws-amplify/ui-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { Delete, Add, Settings as SettingsIcon } from "@mui/icons-material";
 import { AuthUser, getCurrentUser } from "aws-amplify/auth";
 import { App as CapacitorApp } from "@capacitor/app";
@@ -37,6 +38,7 @@ const setWidgetPreferences = async (entities: CountdownEntity[]) => {
 
 export default function Countdowns() {
   const { tokens } = useTheme();
+  const [selectedCountdown, setSelectedCountdown] = useState<CountdownEntity>();
   const [createCountdown, setCreateCountdown] = useState<boolean>(false);
   const [settings, setSettings] = useState<boolean>(false);
   const [countdowns, setCountdowns] = useState<CountdownEntity[]>([]);
@@ -67,6 +69,17 @@ export default function Countdowns() {
       setCountdowns(updatedCountdowns);
       setWidgetPreferences(updatedCountdowns);
     });
+    const updateCountdownSubscription = updateCountdownListener((countdown) => {
+      const updatedCountdowns = [
+        ...countdowns.filter((c) => c.id !== countdown.id),
+        countdown,
+      ];
+      updatedCountdowns.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      setCountdowns(updatedCountdowns);
+      setWidgetPreferences(updatedCountdowns);
+    });
     const deleteCountdownSubscription = deleteCountdownListener((countdown) => {
       const updatedCountdowns = countdowns.filter((c) => c.id !== countdown.id);
       setCountdowns(updatedCountdowns);
@@ -80,6 +93,7 @@ export default function Countdowns() {
     });
     return () => {
       unsubscribeListener(createCountdownSubscription);
+      unsubscribeListener(updateCountdownSubscription);
       unsubscribeListener(deleteCountdownSubscription);
       clearInterval(interval);
       CapacitorApp.removeAllListeners();
@@ -87,7 +101,15 @@ export default function Countdowns() {
   }, [countdowns, tick]);
 
   if (createCountdown) {
-    return <CreateCountdown onCreated={() => setCreateCountdown(false)} />;
+    return (
+      <CreateCountdown
+        existingCountdown={selectedCountdown}
+        onCreated={() => {
+          setCreateCountdown(false);
+          setSelectedCountdown(undefined);
+        }}
+      />
+    );
   }
 
   if (settings && user) {
@@ -118,7 +140,12 @@ export default function Countdowns() {
             borderRadius={tokens.radii.xl}
             justifyContent={"space-between"}
             alignItems={"center"}
+            textAlign={"center"}
             padding={tokens.space.medium}
+            onClick={() => {
+              setSelectedCountdown(c);
+              setCreateCountdown(true);
+            }}
           >
             <Text fontSize={tokens.fontSizes.xxxxl} as="span">
               {c.emoji}
@@ -135,7 +162,11 @@ export default function Countdowns() {
                 textAlign={"center"}
                 color={tokens.colors.overlay[50]}
               >
-                {formatDistanceToNow(new Date(c.date))}
+                {formatDistanceToNowStrict(new Date(c.date), {
+                  addSuffix: true,
+                  roundingMethod: "round",
+                  unit: "day",
+                })}
               </Text>
             </View>
             <View>
