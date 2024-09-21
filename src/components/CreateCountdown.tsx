@@ -61,7 +61,12 @@ export default function CreateCountdown(props: {
   };
 
   const onSetDate = (event: ChangeEvent<HTMLInputElement>) => {
-    setDate(endOfDay(new Date(event.target.value)));
+    const inputtedDate = new Date(event.target.value);
+    const utcDate = new Date(
+      inputtedDate.toLocaleDateString("en-US", { timeZone: "utc" })
+    );
+    const updatedDate = endOfDay(utcDate);
+    setDate(updatedDate);
   };
 
   const onSetTitle = (event: ChangeEvent<HTMLInputElement>) => {

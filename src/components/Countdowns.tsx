@@ -14,6 +14,7 @@ import {
   Button,
   Divider,
   Flex,
+  Loader,
   Text,
   useTheme,
   View,
@@ -41,6 +42,7 @@ export default function Countdowns() {
   const [selectedCountdown, setSelectedCountdown] = useState<CountdownEntity>();
   const [createCountdown, setCreateCountdown] = useState<boolean>(false);
   const [settings, setSettings] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState<boolean>(false);
   const [countdowns, setCountdowns] = useState<CountdownEntity[]>([]);
   const [tick, setTick] = useState<number>(0);
   const [user, setUser] = useState<AuthUser>();
@@ -49,9 +51,14 @@ export default function Countdowns() {
     const fetchCountdowns = async () => {
       const c = await listCountdowns();
       const u = await getCurrentUser();
+      c.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const filteredCountdowns = c.filter(
+        (c) => new Date(c.date).getTime() > new Date().getTime()
+      );
+      setCountdowns(filteredCountdowns);
+      setWidgetPreferences(filteredCountdowns);
       setUser(u);
-      setCountdowns(c);
-      setWidgetPreferences(c);
+      setLoaded(true);
     };
 
     fetchCountdowns();
@@ -66,8 +73,11 @@ export default function Countdowns() {
       updatedCountdowns.sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
       );
-      setCountdowns(updatedCountdowns);
-      setWidgetPreferences(updatedCountdowns);
+      const filteredCountdowns = updatedCountdowns.filter(
+        (c) => new Date(c.date).getTime() > new Date().getTime()
+      );
+      setCountdowns(filteredCountdowns);
+      setWidgetPreferences(filteredCountdowns);
     });
     const updateCountdownSubscription = updateCountdownListener((countdown) => {
       const updatedCountdowns = [
@@ -77,17 +87,26 @@ export default function Countdowns() {
       updatedCountdowns.sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
       );
-      setCountdowns(updatedCountdowns);
-      setWidgetPreferences(updatedCountdowns);
+      const filteredCountdowns = updatedCountdowns.filter(
+        (c) => new Date(c.date).getTime() > new Date().getTime()
+      );
+      setCountdowns(filteredCountdowns);
+      setWidgetPreferences(filteredCountdowns);
     });
     const deleteCountdownSubscription = deleteCountdownListener((countdown) => {
       const updatedCountdowns = countdowns.filter((c) => c.id !== countdown.id);
-      setCountdowns(updatedCountdowns);
-      setWidgetPreferences(updatedCountdowns);
+      updatedCountdowns.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      const filteredCountdowns = updatedCountdowns.filter(
+        (c) => new Date(c.date).getTime() > new Date().getTime()
+      );
+      setCountdowns(filteredCountdowns);
+      setWidgetPreferences(filteredCountdowns);
     });
     CapacitorApp.addListener("appStateChange", async ({ isActive }) => {
-      WidgetsBridgePlugin.reloadAllTimelines();
       if (isActive) {
+        WidgetsBridgePlugin.reloadAllTimelines();
         setTick(() => tick + 1);
       }
     });
@@ -130,9 +149,8 @@ export default function Countdowns() {
 
   return (
     <>
-      {countdowns
-        .filter((c) => new Date(c.date).getTime() > new Date().getTime())
-        .map((c) => (
+      {loaded ? (
+        countdowns.map((c) => (
           <Flex
             key={c.id}
             margin={tokens.space.small}
@@ -179,7 +197,10 @@ export default function Countdowns() {
               </Button>
             </View>
           </Flex>
-        ))}
+        ))
+      ) : (
+        <Loader variation="linear" size="large" />
+      )}
       <Divider
         marginBottom={tokens.space.medium}
         paddingBottom={tokens.space.medium}
