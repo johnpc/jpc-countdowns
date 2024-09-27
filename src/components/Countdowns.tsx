@@ -19,7 +19,7 @@ import {
   useTheme,
   View,
 } from "@aws-amplify/ui-react";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceToNowStrict, subDays } from "date-fns";
 import { Delete, Add, Settings as SettingsIcon } from "@mui/icons-material";
 import { AuthUser, getCurrentUser } from "aws-amplify/auth";
 import { App as CapacitorApp } from "@capacitor/app";
@@ -180,7 +180,7 @@ export default function Countdowns() {
                 textAlign={"center"}
                 color={tokens.colors.overlay[50]}
               >
-                {formatDistanceToNowStrict(new Date(c.date), {
+                {formatDistanceToNowStrict(subDays(new Date(c.date), 1), {
                   addSuffix: true,
                   roundingMethod: "round",
                   unit: "day",

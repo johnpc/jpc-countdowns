@@ -10,11 +10,11 @@ import SwiftUI
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), emoji: "😀", title: "Demo", hexColor: "#ffffff")
+        SimpleEntry(date: Date(), emoji: "😀", title: "Demo", hexColor: "#ffffff", countdownDate: .now)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), emoji: "😀", title: "Demo", hexColor: "#ffffff")
+        let entry = SimpleEntry(date: Date(), emoji: "😀", title: "Demo", hexColor: "#ffffff", countdownDate: .now)
         completion(entry)
     }
 
@@ -44,8 +44,13 @@ struct Provider: TimelineProvider {
                         let components = calendar.dateComponents([.year, .month, .day, .hour], from: date)
                         let entryDate = calendar.date(from:components)!
                         
-                        let entry = SimpleEntry(date: entryDate, emoji: emoji, title: title, hexColor: color)
-                        entries.append(entry)
+                        let entry = SimpleEntry(date: .now, emoji: emoji, title: title, hexColor: color, countdownDate: entryDate)
+                        
+                        let currentDate = Date()
+                        if (currentDate < entryDate) {
+                            entries.append(entry)
+                            break;
+                        }
                     }
 
                     let timeline = Timeline(entries: entries, policy: .atEnd)
@@ -66,7 +71,7 @@ struct Provider: TimelineProvider {
                 let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
                 
                 
-                let entry = SimpleEntry(date: entryDate, emoji: "😀", title: "No Countdowns Yet", hexColor: "#ffffff")
+                let entry = SimpleEntry(date: .now, emoji: "😀", title: "No Countdowns Yet", hexColor: "#ffffff", countdownDate: entryDate)
                 entries.append(entry)
             }
 
@@ -81,6 +86,7 @@ struct SimpleEntry: TimelineEntry {
     let emoji: String
     let title: String
     let hexColor: String
+    let countdownDate: Date
 }
 
 extension Color {
@@ -149,7 +155,7 @@ struct JpcCountdownsWidgetEntryView : View {
                     
                 }
                 Spacer()
-                Text(stringFromTimeInterval(timeInterval: Date().distance(to: entry.date)))
+                Text(stringFromTimeInterval(timeInterval: Date().distance(to: entry.countdownDate)))
                     .font(.system(size: 20, weight: .heavy))
                     .foregroundColor(.white.opacity(0.8))
                 Spacer()
@@ -182,6 +188,6 @@ struct JpcCountdownsWidget: Widget {
 #Preview(as: .systemSmall) {
     JpcCountdownsWidget()
 } timeline: {
-    SimpleEntry(date: .now, emoji: "😀", title: "Demo #1", hexColor: "#ffffff")
-    SimpleEntry(date: .now, emoji: "🤩", title: "Demo #2", hexColor: "#e2e2e2")
+    SimpleEntry(date: .now, emoji: "😀", title: "Demo #1", hexColor: "#ffffff", countdownDate: .now)
+    SimpleEntry(date: .now, emoji: "🤩", title: "Demo #2", hexColor: "#e2e2e2", countdownDate: .now)
 }
