@@ -10,20 +10,12 @@ import {
   deleteCountdown,
   updateCountdownListener,
 } from "../entities";
-import {
-  Button,
-  Divider,
-  Flex,
-  Loader,
-  Text,
-  useTheme,
-  View,
-} from "@aws-amplify/ui-react";
-import { formatDistanceToNowStrict, subDays } from "date-fns";
-import { Delete, Add, Settings as SettingsIcon } from "@mui/icons-material";
+import { Button, Divider, Loader, useTheme } from "@aws-amplify/ui-react";
+import { Add, Settings as SettingsIcon } from "@mui/icons-material";
 import { AuthUser, getCurrentUser } from "aws-amplify/auth";
 import { App as CapacitorApp } from "@capacitor/app";
 import { WidgetsBridgePlugin } from "capacitor-widgetsbridge-plugin";
+import Countdown from "./Countdown";
 
 const WIDGET_PREFERENCES_GROUP = "group.com.johncorser.countdowns.prefs";
 const PREFERENCES_KEY = "countdownEntities";
@@ -150,54 +142,16 @@ export default function Countdowns() {
   return (
     <>
       {loaded ? (
-        countdowns.map((c) => (
-          <Flex
-            key={c.id}
-            margin={tokens.space.small}
-            backgroundColor={c.hexColor}
-            borderRadius={tokens.radii.xl}
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            textAlign={"center"}
-            padding={tokens.space.medium}
-            onClick={() => {
-              setSelectedCountdown(c);
-              setCreateCountdown(true);
-            }}
-          >
-            <Text fontSize={tokens.fontSizes.xxxxl} as="span">
-              {c.emoji}
-            </Text>
-            <View>
-              <Text
-                fontSize={tokens.fontSizes.xxl}
-                color={tokens.colors.overlay[70]}
-              >
-                {c.title}
-              </Text>
-              <Text
-                fontSize={tokens.fontSizes.medium}
-                textAlign={"center"}
-                color={tokens.colors.overlay[50]}
-              >
-                {formatDistanceToNowStrict(subDays(new Date(c.date), 1), {
-                  addSuffix: true,
-                  roundingMethod: "round",
-                  unit: "day",
-                })}
-              </Text>
-            </View>
-            <View>
-              <Button
-                variation="link"
-                color={tokens.colors.overlay[50]}
-                onClick={() => onDeleteCountdownClick(c)}
-              >
-                <Delete />
-              </Button>
-            </View>
-          </Flex>
-        ))
+        countdowns
+          .filter((c) => new Date(c.date).getTime() > new Date().getTime())
+          .map((c) => (
+            <Countdown
+              countdown={c}
+              setCreateCountdown={setCreateCountdown}
+              setSelectedCountdown={setSelectedCountdown}
+              deleteCountdown={onDeleteCountdownClick}
+            />
+          ))
       ) : (
         <Loader variation="linear" size="large" />
       )}
