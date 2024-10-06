@@ -17,8 +17,9 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { WidgetsBridgePlugin } from "capacitor-widgetsbridge-plugin";
 import Countdown from "./Countdown";
 
-const WIDGET_PREFERENCES_GROUP = "group.com.johncorser.countdowns.prefs";
-const PREFERENCES_KEY = "countdownEntities";
+export const WIDGET_PREFERENCES_GROUP = "group.com.johncorser.countdowns.prefs";
+export const PREFERENCES_KEY = "countdownEntities";
+export const WIDGET_OVERRIDE_COUNTDOWN_ID_KEY = "widgetOverrideCountdownId";
 
 const setWidgetPreferences = async (entities: CountdownEntity[]) => {
   await WidgetsBridgePlugin.setItem({
@@ -26,6 +27,7 @@ const setWidgetPreferences = async (entities: CountdownEntity[]) => {
     key: PREFERENCES_KEY,
     value: JSON.stringify(entities),
   });
+
   await WidgetsBridgePlugin.reloadAllTimelines();
 };
 
@@ -124,7 +126,13 @@ export default function Countdowns() {
   }
 
   if (settings && user) {
-    return <Settings user={user} onFinished={() => setSettings(false)} />;
+    return (
+      <Settings
+        countdowns={countdowns}
+        user={user}
+        onFinished={() => setSettings(false)}
+      />
+    );
   }
 
   const onCreateCountdownClick = async () => {

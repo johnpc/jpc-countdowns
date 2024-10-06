@@ -22,13 +22,41 @@ struct Provider: TimelineProvider {
         
         if let userDefaults = UserDefaults(suiteName: "group.com.johncorser.countdowns.prefs") {
             let countdownEntitiesJsonString = userDefaults.string(forKey: "countdownEntities") ?? "[]"
+            let widgetOverrideCountdownId = userDefaults.string(forKey: "widgetOverrideCountdownId") ?? ""
 
             let data = countdownEntitiesJsonString.data(using: .utf8)!
             do {
                 if let jsonArray = try JSONSerialization.jsonObject(with: data, options : .allowFragments) as? [Dictionary<String,Any>]
                 {
                     var entries: [SimpleEntry] = []
-                    for countdownEntity in jsonArray {
+                    func getWidgetOverrideCountdown (countdownEntity: Dictionary<String,Any>) -> Bool {
+                        if widgetOverrideCountdownId.isEmpty {
+                            return false
+                        }
+                        if countdownEntity["id"] as! String != widgetOverrideCountdownId {
+                            return false
+                        }
+                        let dateString = countdownEntity["date"] as! String
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.locale = Locale(identifier: "en_US_POSIX") // set locale to reliable US_POSIX
+                        
+                        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+                        print(dateString)
+                        let date = dateFormatter.date(from:dateString)!
+                        
+                        let calendar = Calendar.current
+                        let components = calendar.dateComponents([.year, .month, .day, .hour], from: date)
+                        let entryDate = calendar.date(from:components)!
+                        let currentDate = Date()
+                        if (currentDate >= entryDate) {
+                            return false
+                        }
+
+                        return true
+                    }
+
+                    if let countdownEntity = jsonArray.first(where: {getWidgetOverrideCountdown(countdownEntity: $0)}) {
+                        
                         let emoji = countdownEntity["emoji"] as! String
                         let title = countdownEntity["title"] as! String
                         let color = countdownEntity["hexColor"] as! String
@@ -46,10 +74,33 @@ struct Provider: TimelineProvider {
                         
                         let entry = SimpleEntry(date: .now, emoji: emoji, title: title, hexColor: color, countdownDate: entryDate)
                         
-                        let currentDate = Date()
-                        if (currentDate < entryDate) {
-                            entries.append(entry)
-                            break;
+                        entries.append(entry)
+
+                       // do something with foo
+                    } else {
+                        for countdownEntity in jsonArray {
+                            let emoji = countdownEntity["emoji"] as! String
+                            let title = countdownEntity["title"] as! String
+                            let color = countdownEntity["hexColor"] as! String
+                            let dateString = countdownEntity["date"] as! String
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.locale = Locale(identifier: "en_US_POSIX") // set locale to reliable US_POSIX
+                            
+                            dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+                            print(dateString)
+                            let date = dateFormatter.date(from:dateString)!
+                            
+                            let calendar = Calendar.current
+                            let components = calendar.dateComponents([.year, .month, .day, .hour], from: date)
+                            let entryDate = calendar.date(from:components)!
+                            
+                            let entry = SimpleEntry(date: .now, emoji: emoji, title: title, hexColor: color, countdownDate: entryDate)
+                            
+                            let currentDate = Date()
+                            if (currentDate < entryDate) {
+                                entries.append(entry)
+                                break;
+                            }
                         }
                     }
 
