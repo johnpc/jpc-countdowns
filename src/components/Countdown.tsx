@@ -1,6 +1,6 @@
 import { Button, Flex, Text, useTheme, View } from "@aws-amplify/ui-react";
 import { CountdownEntity } from "../entities";
-import { formatDistanceToNowStrict, subDays } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { Delete } from "@mui/icons-material";
 
 export default function Countdown(props: {
@@ -15,7 +15,7 @@ export default function Countdown(props: {
     await props.deleteCountdown(countdown);
   };
 
-  const countdownDate = subDays(new Date(props.countdown.date), 1);
+  const countdownDate = new Date(props.countdown.date);
   const isToday = countdownDate.toDateString() === new Date().toDateString();
   const formattedDateString = isToday
     ? "today"
