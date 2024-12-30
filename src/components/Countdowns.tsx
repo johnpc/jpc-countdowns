@@ -71,6 +71,7 @@ export default function Countdowns() {
       const filteredCountdowns = updatedCountdowns.filter(
         (c) => new Date(c.date).getTime() > new Date().getTime()
       );
+      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns))
       setCountdowns(filteredCountdowns);
       setWidgetPreferences(filteredCountdowns);
     });
@@ -85,6 +86,7 @@ export default function Countdowns() {
       const filteredCountdowns = updatedCountdowns.filter(
         (c) => new Date(c.date).getTime() > new Date().getTime()
       );
+      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns))
       setCountdowns(filteredCountdowns);
       setWidgetPreferences(filteredCountdowns);
     });
@@ -96,6 +98,7 @@ export default function Countdowns() {
       const filteredCountdowns = updatedCountdowns.filter(
         (c) => new Date(c.date).getTime() > new Date().getTime()
       );
+      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns))
       setCountdowns(filteredCountdowns);
       setWidgetPreferences(filteredCountdowns);
     });
