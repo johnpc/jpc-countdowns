@@ -37,7 +37,11 @@ export default function Countdowns() {
   const [createCountdown, setCreateCountdown] = useState<boolean>(false);
   const [settings, setSettings] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [countdowns, setCountdowns] = useState<CountdownEntity[]>(localStorage.getItem("countdowns") ? JSON.parse(localStorage.getItem("countdowns")!) : []);
+  const [countdowns, setCountdowns] = useState<CountdownEntity[]>(
+    localStorage.getItem("countdowns")
+      ? JSON.parse(localStorage.getItem("countdowns")!)
+      : []
+  );
   const [tick, setTick] = useState<number>(0);
   const [user, setUser] = useState<AuthUser>();
 
@@ -49,7 +53,7 @@ export default function Countdowns() {
       const filteredCountdowns = c.filter(
         (c) => new Date(c.date).getTime() > new Date().getTime()
       );
-      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns))
+      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns));
       setCountdowns(filteredCountdowns);
       setWidgetPreferences(filteredCountdowns);
       setUser(u);
@@ -71,7 +75,7 @@ export default function Countdowns() {
       const filteredCountdowns = updatedCountdowns.filter(
         (c) => new Date(c.date).getTime() > new Date().getTime()
       );
-      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns))
+      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns));
       setCountdowns(filteredCountdowns);
       setWidgetPreferences(filteredCountdowns);
     });
@@ -86,7 +90,7 @@ export default function Countdowns() {
       const filteredCountdowns = updatedCountdowns.filter(
         (c) => new Date(c.date).getTime() > new Date().getTime()
       );
-      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns))
+      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns));
       setCountdowns(filteredCountdowns);
       setWidgetPreferences(filteredCountdowns);
     });
@@ -98,7 +102,7 @@ export default function Countdowns() {
       const filteredCountdowns = updatedCountdowns.filter(
         (c) => new Date(c.date).getTime() > new Date().getTime()
       );
-      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns))
+      localStorage.setItem("countdowns", JSON.stringify(filteredCountdowns));
       setCountdowns(filteredCountdowns);
       setWidgetPreferences(filteredCountdowns);
     });
@@ -153,7 +157,7 @@ export default function Countdowns() {
 
   return (
     <>
-      {(loaded || countdowns.length) ? (
+      {loaded || countdowns.length ? (
         countdowns
           .filter((c) => new Date(c.date).getTime() > new Date().getTime())
           .map((c) => (

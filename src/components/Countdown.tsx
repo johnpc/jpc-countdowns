@@ -36,15 +36,16 @@ export default function Countdown(props: {
         alignItems={"center"}
         textAlign={"center"}
         padding={tokens.space.medium}
-        onClick={() => {
-          props.setSelectedCountdown(props.countdown);
-          props.setCreateCountdown(true);
-        }}
       >
         <Text fontSize={tokens.fontSizes.xxxxl} as="span">
           {props.countdown.emoji}
         </Text>
-        <View>
+        <View
+          onClick={() => {
+            props.setSelectedCountdown(props.countdown);
+            props.setCreateCountdown(true);
+          }}
+        >
           <Text
             fontSize={tokens.fontSizes.xxl}
             color={tokens.colors.overlay[70]}

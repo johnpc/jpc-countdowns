@@ -20,6 +20,7 @@ import {
   WIDGET_OVERRIDE_COUNTDOWN_ID_KEY,
   WIDGET_PREFERENCES_GROUP,
 } from "./Countdowns";
+import { createCountdownsForMajorHolidays } from "../helpers/createCountdownsForMajorHolidays";
 
 const localStorageWidgetCountdownIdKey = "widgetCountdownId";
 
@@ -112,6 +113,18 @@ export default function SettingsPage(props: {
           paddingBottom={tokens.space.medium}
         />
         <AccountSettings.DeleteUser onSuccess={handleSuccess} />
+        <Divider
+          marginBottom={tokens.space.medium}
+          paddingBottom={tokens.space.medium}
+        />
+        <Button
+          variation="primary"
+          colorTheme="info"
+          isFullWidth
+          onClick={() => createCountdownsForMajorHolidays(props.countdowns)}
+        >
+          Generate Holiday Countdowns
+        </Button>
         <Divider
           marginBottom={tokens.space.medium}
           paddingBottom={tokens.space.medium}

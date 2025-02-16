@@ -9,3 +9,4 @@
 .husky/
 dist/
 ios/
+public/apple-app-site-association

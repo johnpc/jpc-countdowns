@@ -24,11 +24,11 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/capacitor-widgetsbridge-plugin"
 
 SPEC CHECKSUMS:
-  Capacitor: 679f9673fdf30597493a6362a5d5bf233d46abc2
-  CapacitorApp: 0bc633b4eae40a1f32cd2834788fad3bc42da6a1
+  Capacitor: 69c7f687aabb8d85e543497411e40638b5cc08c0
+  CapacitorApp: f51c08c64df914fc934239fd1b3fc809d62a02f6
   CapacitorCordova: f48c89f96c319101cd2f0ce8a2b7449b5fb8b3dd
-  CapacitorWidgetsbridgePlugin: 384cf6a56ba2a3ee6d199579f5403723e766b958
+  CapacitorWidgetsbridgePlugin: 2b25b0ed502849687a3cd4cc63a4409b94119f25
 
 PODFILE CHECKSUM: 3ebce3a826092afdc7193c98c325d721e7b5eede
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
