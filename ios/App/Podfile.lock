@@ -1,9 +1,9 @@
 PODS:
-  - Capacitor (6.1.2):
+  - Capacitor (6.2.1):
     - CapacitorCordova
-  - CapacitorApp (6.0.1):
+  - CapacitorApp (6.0.2):
     - Capacitor
-  - CapacitorCordova (6.1.2)
+  - CapacitorCordova (6.2.1)
   - CapacitorWidgetsbridgePlugin (0.1.2):
     - Capacitor
 
@@ -24,9 +24,9 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/capacitor-widgetsbridge-plugin"
 
 SPEC CHECKSUMS:
-  Capacitor: 69c7f687aabb8d85e543497411e40638b5cc08c0
-  CapacitorApp: f51c08c64df914fc934239fd1b3fc809d62a02f6
-  CapacitorCordova: f48c89f96c319101cd2f0ce8a2b7449b5fb8b3dd
+  Capacitor: c95400d761e376be9da6be5a05f226c0e865cebf
+  CapacitorApp: e1e6b7d05e444d593ca16fd6d76f2b7c48b5aea7
+  CapacitorCordova: 8d93e14982f440181be7304aa9559ca631d77fff
   CapacitorWidgetsbridgePlugin: 2b25b0ed502849687a3cd4cc63a4409b94119f25
 
 PODFILE CHECKSUM: 3ebce3a826092afdc7193c98c325d721e7b5eede
