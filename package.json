@@ -9,6 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "prepare": "husky install",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage && node scripts/check-crap.js",
+    "test:e2e": "npx bddgen && playwright test",
     "prod-config": "ampx generate outputs --app-id d1letrbu1eg8la --branch main --profile personal",
     "ios": "npm run prod-config && npm run dev-ios",
     "dev-ios": "npm run build && cap sync && cap copy ios && cap open ios"
@@ -39,9 +43,13 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^6.1.2",
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-istanbul": "^4.1.7",
     "aws-cdk": "^2.158.0",
     "aws-cdk-lib": "^2.158.0",
     "constructs": "^10.3.0",
@@ -51,19 +59,21 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "husky": "^8.0.0",
+    "jsdom": "^29.1.1",
     "lint-staged": "^15.2.10",
+    "playwright-bdd": "^8.5.1",
+    "prettier": "^3.8.3",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.0.1",
-    "vite": "^7.3.0"
+    "vite": "^7.3.0",
+    "vitest": "^4.1.7"
   },
   "lint-staged": {
-    "*.ts": [
+    "*.{ts,tsx}": [
       "prettier --write",
       "eslint --cache --fix"
     ],
-    "*.json": "prettier --write",
-    "*.yml": "prettier --write",
-    "*.md": "prettier --write"
+    "*.{json,md,yml}": "prettier --write"
   }
 }

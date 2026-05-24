@@ -29,3 +29,9 @@ amplify_outputs*
 amplifyconfiguration*
 .eslintcache
 *.tsbuildinfo
+
+# testing
+coverage/
+playwright-report/
+test-results/
+.features-gen/
