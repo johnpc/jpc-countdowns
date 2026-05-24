@@ -15,6 +15,7 @@ jobs:
           node-version: 20
           cache: "npm"
       - run: npm ci
+      - run: echo '{"auth":{},"data":{},"version":"1"}' > amplify_outputs.json
       - run: npm run test:coverage
       - run: npm run build
       - run: npx playwright install --with-deps chromium
