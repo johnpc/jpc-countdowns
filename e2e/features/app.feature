@@ -1,5 +1,6 @@
 Feature: App Loading
 
-  Scenario: App shows login page when unauthenticated
+  Scenario: User can log in and see countdowns
     Given I navigate to the app
-    Then I should see the authentication form
+    When I log in with valid credentials
+    Then I should see the countdowns list
