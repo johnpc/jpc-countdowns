@@ -4,7 +4,15 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: { "@": path.resolve(__dirname, ".") } },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "."),
+      "../amplify_outputs.json": path.resolve(
+        __dirname,
+        "src/test-amplify-outputs.json",
+      ),
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,
