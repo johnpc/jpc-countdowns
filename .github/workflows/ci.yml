@@ -8,6 +8,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,6 +19,6 @@ jobs:
           node-version: 20
           cache: "npm"
       - run: npm ci
-      - run: echo '{"auth":{},"data":{},"version":"1"}' > amplify_outputs.json
+      - run: npx ampx generate outputs --app-id d1letrbu1eg8la --branch main
       - run: npm run test:coverage
       - run: npm run build
