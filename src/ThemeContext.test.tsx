@@ -15,6 +15,19 @@ const TestConsumer = () => {
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.removeAttribute("data-color-mode");
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: (query: string) => ({
+      matches: query === "(prefers-color-scheme: dark)",
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
 });
 
 describe("ThemeContext", () => {
@@ -68,6 +81,28 @@ describe("ThemeContext", () => {
       screen.getByText("toggle").click();
     });
     expect(localStorage.getItem("colorMode")).toBe("light");
+  });
+
+  it("respects system preference when localStorage is empty and prefers light", () => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: (query: string) => ({
+        matches: query === "(prefers-color-scheme: light)",
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }),
+    });
+    render(
+      <ColorModeProvider>
+        <TestConsumer />
+      </ColorModeProvider>,
+    );
+    expect(screen.getByTestId("mode").textContent).toBe("light");
   });
 
   it("sets data-color-mode attribute on document.documentElement", () => {

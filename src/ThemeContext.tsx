@@ -19,7 +19,10 @@ export const ColorModeProvider = ({
 }) => {
   const [colorMode, setColorMode] = useState<ColorMode>(() => {
     const stored = localStorage.getItem("colorMode");
-    return stored === "light" || stored === "dark" ? stored : "dark";
+    if (stored === "light" || stored === "dark") return stored;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {

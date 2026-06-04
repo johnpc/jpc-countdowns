@@ -14,7 +14,6 @@ vi.mock("aws-amplify", () => ({
 
 vi.mock("../amplify_outputs.json", () => ({ default: { auth: {} } }));
 vi.mock("@aws-amplify/ui-react/styles.css", () => ({}));
-vi.mock("./main.css", () => ({}));
 
 vi.mock("@aws-amplify/ui-react", () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => children,

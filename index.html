@@ -7,6 +7,18 @@
     <title>jpc.countdowns</title>
   </head>
   <body>
+    <script>
+      (function () {
+        var stored = localStorage.getItem('colorMode');
+        var mode =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.setAttribute('data-color-mode', mode);
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
