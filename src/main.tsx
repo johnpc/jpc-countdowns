@@ -10,6 +10,7 @@ import {
   ThemeProvider,
   defaultDarkModeOverride,
 } from "@aws-amplify/ui-react";
+import { ColorModeProvider, useColorMode } from "./ThemeContext";
 Amplify.configure(config);
 
 const theme: Theme = {
@@ -18,10 +19,19 @@ const theme: Theme = {
   overrides: [defaultDarkModeOverride],
 };
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ThemeProvider colorMode={"dark"} theme={theme}>
+const ThemedApp = () => {
+  const { colorMode } = useColorMode();
+  return (
+    <ThemeProvider colorMode={colorMode} theme={theme}>
       <App />
     </ThemeProvider>
-  </StrictMode>
+  );
+};
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <ColorModeProvider>
+      <ThemedApp />
+    </ColorModeProvider>
+  </StrictMode>,
 );

@@ -21,6 +21,11 @@ vi.mock("@aws-amplify/ui-react", () => ({
   defaultDarkModeOverride: {},
 }));
 
+vi.mock("./ThemeContext", () => ({
+  ColorModeProvider: ({ children }: { children: React.ReactNode }) => children,
+  useColorMode: () => ({ colorMode: "dark", toggleColorMode: () => {} }),
+}));
+
 vi.mock("./App", () => ({
   default: () => null,
 }));

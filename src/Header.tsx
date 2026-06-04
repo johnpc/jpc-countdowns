@@ -4,11 +4,16 @@ import {
   Heading,
   Flex,
   Text,
+  Button,
   useTheme,
 } from "@aws-amplify/ui-react";
+import DarkMode from "@mui/icons-material/DarkMode";
+import LightMode from "@mui/icons-material/LightMode";
+import { useColorMode } from "./ThemeContext";
 
 export const Header = () => {
   const { tokens } = useTheme();
+  const { colorMode, toggleColorMode } = useColorMode();
   return (
     <View
       backgroundColor={tokens.colors.background.secondary}
@@ -34,6 +39,18 @@ export const Header = () => {
               Keep track of what's coming up
             </Text>
           </Flex>
+          <Button
+            onClick={toggleColorMode}
+            variation="link"
+            aria-label="Toggle color mode"
+            style={{ marginLeft: "auto" }}
+          >
+            {colorMode === "dark" ? (
+              <LightMode fontSize="small" />
+            ) : (
+              <DarkMode fontSize="small" />
+            )}
+          </Button>
         </Flex>
       </Card>
     </View>
