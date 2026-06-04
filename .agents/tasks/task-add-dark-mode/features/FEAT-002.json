@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add dark mode toggle with persistent state, updating the ThemeProvider colorMode dynamically. Currently the app is hardcoded to dark mode in main.tsx. This feature introduces a React context to manage colorMode state (light/dark), persists the user preference in localStorage, and adds a toggle button in the Header.",
+  "status": "pending",
+  "steps": [
+    "Create a new file src/ThemeContext.tsx that exports a React context (ColorModeContext) and a provider component (ColorModeProvider). The provider should: (1) read initial colorMode from localStorage key 'colorMode' defaulting to 'dark', (2) expose colorMode and toggleColorMode function, (3) persist changes to localStorage.",
+    "Update src/main.tsx to wrap the app in ColorModeProvider and pass the colorMode from context to ThemeProvider's colorMode prop instead of hardcoding 'dark'. This requires restructuring so that ThemeProvider reads from context. A pattern: ColorModeProvider wraps ThemeProvider, and a small inner component reads context and passes colorMode to ThemeProvider.",
+    "Update src/Header.tsx to add a dark/light mode toggle button. Use @mui/icons-material DarkMode and LightMode icons. Import useContext and ColorModeContext to get toggleColorMode and current colorMode. Place the toggle button on the right side of the existing Flex row in the header Card.",
+    "Update src/main.css to remove the hardcoded dark background-color on :root so it does not conflict with theme-driven colors.",
+    "Update src/index.css to support both light and dark modes properly. Remove the hardcoded dark background (#242424) from :root. Instead, use CSS variables or let the Amplify ThemeProvider handle backgrounds. Keep the @media (prefers-color-scheme: light) block as a fallback but ensure the manual toggle takes precedence via a data attribute or class on the html/body element.",
+    "Add a data-color-mode attribute on document.documentElement in the ColorModeProvider so CSS can target [data-color-mode='light'] and [data-color-mode='dark']. Update index.css to use these selectors instead of @media queries for background and text colors.",
+    "Write unit tests in src/ThemeContext.test.tsx that verify: (1) default colorMode is 'dark', (2) toggling changes from dark to light, (3) localStorage is updated on toggle, (4) initial state respects localStorage value.",
+    "Update src/main.test.tsx to account for the new ColorModeProvider wrapper.",
+    "Run npm run test to ensure all tests pass.",
+    "Run npm run build to ensure the build succeeds."
+  ],
+  "acceptance_criteria": [
+    "A toggle button is visible in the Header that switches between light and dark mode icons",
+    "Clicking the toggle changes the app's color scheme between light and dark",
+    "The user's preference persists across page reloads via localStorage",
+    "The Amplify ThemeProvider receives the dynamic colorMode value",
+    "All existing tests continue to pass",
+    "New unit tests for ThemeContext pass",
+    "npm run build succeeds"
+  ],
+  "verification": [
+    "npm run test exits with code 0",
+    "npm run build exits with code 0"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

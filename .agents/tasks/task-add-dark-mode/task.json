@@ -1,0 +1,7 @@
+{
+  "task_id": "task-add-dark-mode",
+  "task_description": "Add dark mode toggle to the jpc-countdowns app. The app currently has colorMode hardcoded to 'dark'. This task adds a user-controlled toggle in the Header that switches between light and dark modes with persistence via localStorage.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}
