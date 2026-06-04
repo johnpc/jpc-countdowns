@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Add dark mode toggle with persistent state, updating the ThemeProvider colorMode dynamically. Currently the app is hardcoded to dark mode in main.tsx. This feature introduces a React context to manage colorMode state (light/dark), persists the user preference in localStorage, and adds a toggle button in the Header.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create a new file src/ThemeContext.tsx that exports a React context (ColorModeContext) and a provider component (ColorModeProvider). The provider should: (1) read initial colorMode from localStorage key 'colorMode' defaulting to 'dark', (2) expose colorMode and toggleColorMode function, (3) persist changes to localStorage.",
     "Update src/main.tsx to wrap the app in ColorModeProvider and pass the colorMode from context to ThemeProvider's colorMode prop instead of hardcoding 'dark'. This requires restructuring so that ThemeProvider reads from context. A pattern: ColorModeProvider wraps ThemeProvider, and a small inner component reads context and passes colorMode to ThemeProvider.",
@@ -29,5 +29,5 @@
     "npm run build exits with code 0"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 87 tests pass (82 existing + 5 new ThemeContext tests). Build succeeds. Pre-commit hooks (prettier, eslint, test, build) all pass. The act() warnings in existing tests are pre-existing and unrelated to this change."
 }
