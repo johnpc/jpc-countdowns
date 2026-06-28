@@ -1,0 +1,243 @@
+name: iOS Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Only one deploy at a time. A second trigger (e.g. a manual dispatch landing
+# alongside the auto workflow_run) queues behind the first instead of racing it
+# and uploading a duplicate build for the same commit.
+concurrency:
+  group: ios-deploy
+  cancel-in-progress: false
+
+env:
+  SCHEME: App
+  # Capacitor 6 uses CocoaPods, so we archive the WORKSPACE (not the project).
+  WORKSPACE: ios/App/App.xcworkspace
+  PROJECT: ios/App/App.xcodeproj
+  BUNDLE_ID: com.johncorser.countdowns
+
+jobs:
+  deploy:
+    name: Deploy to App Store Connect
+    runs-on: macos-15
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Configure AWS "personal" profile
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          mkdir -p ~/.aws
+          printf '[personal]\naws_access_key_id=%s\naws_secret_access_key=%s\n' \
+            "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+          printf '[profile personal]\nregion=us-west-2\n' > ~/.aws/config
+
+      - name: Generate amplify_outputs.json from prod backend
+        run: npx ampx generate outputs --app-id d1letrbu1eg8la --branch main --profile personal
+
+      - name: Build web and sync to Capacitor iOS
+        run: |
+          npm run build
+          npx cap sync ios
+
+      - name: Install CocoaPods
+        working-directory: ios/App
+        run: pod install --repo-update
+
+      - name: Write App Store Connect API key
+        run: |
+          mkdir -p ~/private_keys
+          echo "${{ secrets.ASC_KEY_CONTENT }}" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+
+      - name: Increment build number
+        working-directory: ios/App
+        run: |
+          BUILD_NUM=$(date +%Y%m%d%H%M%S)
+          agvtool new-version -all $BUILD_NUM
+          echo "Set build number to $BUILD_NUM"
+          # Export so the external-beta step can find this exact build by its
+          # CFBundleVersion (unchanged even if MARKETING_VERSION is bumped on conflict).
+          echo "BUILD_NUM=$BUILD_NUM" >> "$GITHUB_ENV"
+
+      - name: Archive and upload (auto-bump version on conflict)
+        run: |
+          cat > /tmp/ExportOptions.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store-connect</string>
+              <key>destination</key>
+              <string>upload</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>teamID</key>
+              <string>${{ secrets.TEAM_ID }}</string>
+          </dict>
+          </plist>
+          PLIST
+
+          archive_and_upload() {
+            xcodebuild archive \
+              -workspace "$WORKSPACE" \
+              -scheme "$SCHEME" \
+              -destination "generic/platform=iOS" \
+              -archivePath ~/Desktop/Countdowns.xcarchive \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+              -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+              -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \
+              -quiet
+
+            xcodebuild -exportArchive \
+              -archivePath ~/Desktop/Countdowns.xcarchive \
+              -exportOptionsPlist /tmp/ExportOptions.plist \
+              -exportPath ~/Desktop/export \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+              -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+              -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} 2>&1
+          }
+
+          OUTPUT=$(archive_and_upload) && echo "$OUTPUT" && exit 0
+
+          if echo "$OUTPUT" | grep -qi "version.*already exists\|already been uploaded\|redundant binary\|train.*closed\|higher version"; then
+            echo "⚠️ Version conflict, bumping patch version..."
+            CURRENT=$(grep -m 1 'MARKETING_VERSION' "$PROJECT/project.pbxproj" | sed 's/.*= *\(.*\);/\1/')
+            MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+            MINOR=$(echo "$CURRENT" | cut -d. -f2)
+            PATCH=$(echo "$CURRENT" | cut -d. -f3)
+            PATCH=${PATCH:-0}
+            NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+            sed -i '' "s/MARKETING_VERSION = ${CURRENT}/MARKETING_VERSION = ${NEW_VERSION}/g" "$PROJECT/project.pbxproj"
+            echo "Bumped $CURRENT → $NEW_VERSION"
+
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "$PROJECT/project.pbxproj"
+            git commit -m "chore(ios): bump version to $NEW_VERSION [skip ci]"
+            git push origin main
+
+            rm -rf ~/Desktop/Countdowns.xcarchive ~/Desktop/export
+            archive_and_upload
+          else
+            echo "$OUTPUT"
+            exit 1
+          fi
+
+      - name: Distribute to external beta testers
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          BUNDLE_ID: ${{ env.BUNDLE_ID }}
+        run: |
+          python3 - << 'EOF'
+          import json, time, os, subprocess, tempfile, base64, urllib.request, urllib.error, ssl
+          ctx = ssl.create_default_context()
+
+          key_id = os.environ["ASC_KEY_ID"]
+          issuer_id = os.environ["ASC_ISSUER_ID"]
+          bundle_id = os.environ["BUNDLE_ID"]
+          build_num = os.environ["BUILD_NUM"]
+          key_path = f"/Users/runner/private_keys/AuthKey_{key_id}.p8"
+          BASE = "https://api.appstoreconnect.apple.com/v1"
+
+          def b64url(data):
+              return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+          def token():
+              header = b64url(json.dumps({"alg":"ES256","kid":key_id,"typ":"JWT"}).encode())
+              now = int(time.time())
+              payload = b64url(json.dumps({"iss":issuer_id,"iat":now,"exp":now+1200,"aud":"appstoreconnect-v1"}).encode())
+              signing_input = f"{header}.{payload}".encode()
+              with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as tf:
+                  tf.write(signing_input); tf.flush()
+                  der = subprocess.run(["openssl","dgst","-sha256","-sign",key_path,tf.name],
+                                       capture_output=True).stdout
+              def parse_der_int(data, offset):
+                  assert data[offset] == 0x02
+                  length = data[offset+1]
+                  value = data[offset+2:offset+2+length]
+                  while len(value) > 32 and value[0] == 0:
+                      value = value[1:]
+                  value = b'\x00' * (32 - len(value)) + value
+                  return value, offset + 2 + length
+              assert der[0] == 0x30
+              r, off = parse_der_int(der, 2)
+              s, _ = parse_der_int(der, off)
+              return f"{header}.{payload}.{b64url(r + s)}"
+
+          def api(path, method="GET", body=None):
+              data = json.dumps(body).encode() if body is not None else None
+              req = urllib.request.Request(f"{BASE}{path}", data=data, method=method,
+                  headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"})
+              try:
+                  resp = urllib.request.urlopen(req, context=ctx)
+                  raw = resp.read()
+                  return json.loads(raw) if raw else {}
+              except urllib.error.HTTPError as e:
+                  print(f"  HTTP {e.code} on {method} {path}: {e.read().decode()}")
+                  raise
+
+          # 1) Resolve the app by bundle id.
+          apps = api(f"/apps?filter[bundleId]={bundle_id}").get("data", [])
+          if not apps:
+              raise SystemExit(f"No app found for bundle id {bundle_id}")
+          app_id = apps[0]["id"]
+
+          # 2) Find OUR build (match this run's CFBundleVersion) and wait for processing.
+          build = None
+          for _ in range(40):  # ~20 min max
+              builds = api(f"/builds?filter[app]={app_id}&filter[version]={build_num}"
+                           "&limit=1&include=preReleaseVersion").get("data", [])
+              if builds:
+                  state = builds[0]["attributes"].get("processingState")
+                  print(f"  build {build_num}: {state}")
+                  if state == "VALID":
+                      build = builds[0]; break
+                  if state in ("INVALID", "FAILED"):
+                      raise SystemExit(f"Build processing {state}")
+              else:
+                  print(f"  build {build_num}: not visible yet")
+              time.sleep(30)
+          if not build:
+              raise SystemExit("Timed out waiting for build to finish processing")
+          build_id = build["id"]
+
+          # 3) Discover external beta groups (isInternalGroup == False).
+          groups = [g for g in api(f"/betaGroups?filter[app]={app_id}&limit=200").get("data", [])
+                    if not g["attributes"].get("isInternalGroup", False)]
+          if not groups:
+              print("No external beta group exists — build uploaded, skipping external distribution.")
+              raise SystemExit(0)
+
+          # 4) Attach the build to each external group. ASC auto-submits for Beta App
+          #    Review on first external assignment.
+          for g in groups:
+              name = g["attributes"].get("name", g["id"])
+              api(f"/betaGroups/{g['id']}/relationships/builds", method="POST",
+                  body={"data": [{"type": "builds", "id": build_id}]})
+              print(f"  attached build {build_num} to external group '{name}'")
+          print(f"Done: distributed build {build_num} to {len(groups)} external group(s).")
+          EOF

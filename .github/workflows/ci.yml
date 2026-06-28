@@ -22,7 +22,14 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npx ampx generate outputs --app-id d1letrbu1eg8la --branch main
-      - run: npm run test:coverage
+      - name: Lint
+        run: npm run lint
+      - name: Format check
+        run: npm run format:check
+      - name: File-length discipline (max 100 lines)
+        run: npm run check:lines
+      - name: Unit tests with coverage (80% floor) + CRAP (threshold 15)
+        run: npm run test:coverage
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

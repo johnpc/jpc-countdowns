@@ -1,6 +1,6 @@
-import { ChangeEvent, useState } from "react";
-import { endOfDay } from "date-fns";
-import { CountdownEntity, createCountdown, updateCountdown } from "../entities";
+import { CountdownEntity } from "../entities";
+import { toDateInputValue } from "../helpers/countdownForm";
+import { useCountdownForm } from "../helpers/useCountdownForm";
 import {
   Button,
   Divider,
@@ -18,146 +18,74 @@ export default function CreateCountdown(props: {
   onCreated: () => void;
 }) {
   const { tokens } = useTheme();
-  const [title, setTitle] = useState<string | undefined>(
-    props.existingCountdown?.title
+  const existing = props.existingCountdown;
+  const form = useCountdownForm(existing, props.onCreated);
+
+  const spacedDivider = (
+    <Divider
+      marginBottom={tokens.space.medium}
+      paddingBottom={tokens.space.medium}
+    />
   );
-  const [date, setDate] = useState<Date | undefined>(
-    props.existingCountdown ? new Date(props.existingCountdown.date) : undefined
-  );
-  const [hexColor, setHexColor] = useState<string | undefined>(
-    props.existingCountdown?.hexColor
-  );
-  const [emoji, setEmoji] = useState<string | undefined>(
-    props.existingCountdown?.emoji
-  );
-  const [showEmojiSelector, setShowEmojiSelector] = useState<boolean>(
-    props.existingCountdown?.emoji ? false : true
-  );
-
-  const onCreateCountdownClick = async () => {
-    if (!title || !date || !hexColor || !emoji) {
-      alert("Ensure all fields are set.");
-      return;
-    }
-
-    if (!props.existingCountdown?.id) {
-      await createCountdown({
-        title,
-        date: date.toISOString(),
-        hexColor,
-        emoji,
-      });
-    } else {
-      await updateCountdown({
-        id: props.existingCountdown.id,
-        title,
-        date: date.toISOString(),
-        hexColor,
-        emoji,
-      });
-    }
-
-    props.onCreated();
-  };
-
-  const onSetDate = (event: ChangeEvent<HTMLInputElement>) => {
-    const inputtedDate = new Date(event.target.value);
-    const utcDate = new Date(
-      inputtedDate.toLocaleDateString("en-US", { timeZone: "utc" })
-    );
-    const updatedDate = endOfDay(utcDate);
-    setDate(updatedDate);
-  };
-
-  const onSetTitle = (event: ChangeEvent<HTMLInputElement>) => {
-    setTitle(event.target.value);
-  };
-
-  const onSetColor = (event: ChangeEvent<HTMLInputElement>) => {
-    console.log({ event });
-    setHexColor(event.target.value);
-  };
-
-  const onSetEmoji = (emojiSelection: { native: string }) => {
-    setEmoji(emojiSelection.native);
-    setShowEmojiSelector(false);
-  };
 
   return (
     <View padding={tokens.space.medium}>
       <TextField
-        defaultValue={title}
+        defaultValue={form.title}
         descriptiveText={
-          title ? "Title Added ✅" : "Add a title for your countdown"
+          form.title ? "Title Added ✅" : "Add a title for your countdown"
         }
         label="Title"
         type="text"
-        onChange={onSetTitle}
-      ></TextField>
-      <Divider
-        marginBottom={tokens.space.medium}
-        paddingBottom={tokens.space.medium}
+        onChange={form.onTitleChange}
       />
+      {spacedDivider}
       <TextField
-        defaultValue={hexColor}
+        defaultValue={form.hexColor}
         descriptiveText={
-          hexColor ? `You have chosen ${hexColor}` : "Select a color"
+          form.hexColor ? `You have chosen ${form.hexColor}` : "Select a color"
         }
         size="large"
         label="Color"
         type="color"
-        onChange={onSetColor}
-      ></TextField>
-      <Divider
-        marginBottom={tokens.space.medium}
-        paddingBottom={tokens.space.medium}
+        onChange={form.onColorChange}
       />
+      {spacedDivider}
       <TextField
-        defaultValue={
-          !props.existingCountdown?.date
-            ? undefined
-            : `${new Date(
-                props.existingCountdown.date
-              ).getFullYear()}-${new Date(
-                props.existingCountdown.date
-              ).toLocaleDateString(undefined, { month: "2-digit" })}-${new Date(
-                props.existingCountdown.date
-              ).toLocaleDateString(undefined, { day: "2-digit" })}`
-        }
+        defaultValue={toDateInputValue(existing?.date)}
         descriptiveText={
-          date ? `You have chosen ${date.toDateString()}` : "Select a date"
+          form.date
+            ? `You have chosen ${form.date.toDateString()}`
+            : "Select a date"
         }
         label="Date"
         type="date"
-        onChange={onSetDate}
-      ></TextField>
-      <Divider
-        marginBottom={tokens.space.medium}
-        paddingBottom={tokens.space.medium}
+        onChange={form.onDateChange}
       />
+      {spacedDivider}
       <Label>Emoji</Label>
-      <Text>{emoji ? `You have chosen ${emoji}` : "Select an emoji"}</Text>
-      {showEmojiSelector ? (
-        <Picker label="Emoji" data={data} onEmojiSelect={onSetEmoji} />
+      <Text>
+        {form.emoji ? `You have chosen ${form.emoji}` : "Select an emoji"}
+      </Text>
+      {form.showEmojiSelector ? (
+        <Picker
+          label="Emoji"
+          data={data}
+          onEmojiSelect={(s: { native: string }) => form.selectEmoji(s.native)}
+        />
       ) : (
         <Button
           margin={tokens.space.small}
-          onClick={() => setShowEmojiSelector(true)}
+          onClick={() => form.setShowEmojiSelector(true)}
         >
           Change Emoji
         </Button>
       )}
-      <Divider
-        marginBottom={tokens.space.medium}
-        paddingBottom={tokens.space.medium}
-      />
-      <Button variation="primary" isFullWidth onClick={onCreateCountdownClick}>
-        {props.existingCountdown ? "Update" : "Create"}
+      {spacedDivider}
+      <Button variation="primary" isFullWidth onClick={form.submit}>
+        {existing ? "Update" : "Create"}
       </Button>
-      <Divider
-        marginBottom={tokens.space.medium}
-        paddingBottom={tokens.space.medium}
-      />
+      {spacedDivider}
       <Button variation="link" isFullWidth onClick={props.onCreated}>
         Back
       </Button>

@@ -23,5 +23,5 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider colorMode={"dark"} theme={theme}>
       <App />
     </ThemeProvider>
-  </StrictMode>
+  </StrictMode>,
 );
