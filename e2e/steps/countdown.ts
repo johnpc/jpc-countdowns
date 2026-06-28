@@ -24,13 +24,19 @@ When("I create a countdown with a unique title", async ({ page }) => {
   await page.locator('input[type="color"]').first().fill("#123456");
   await page.locator('input[type="date"]').first().fill(FUTURE_DATE);
 
-  // Pick any emoji from the picker, then submit.
-  await page.locator("em-emoji-picker").waitFor({ timeout: 15000 });
-  await page
-    .locator("em-emoji-picker")
-    .getByRole("button")
-    .first()
-    .click({ timeout: 15000 });
+  // Pick an emoji. The picker's leading buttons are category tabs ("Frequently
+  // used", …); the actual emojis are buttons named by their glyph. Target a
+  // glyph button, then wait for the selection to register (the picker closes
+  // and "You have chosen" appears) before submitting — otherwise the form's
+  // all-fields-required guard silently rejects the create.
+  const picker = page.locator("em-emoji-picker");
+  await picker.waitFor({ timeout: 15000 });
+  await picker.getByRole("button", { name: "👍" }).first().click({
+    timeout: 15000,
+  });
+  await expect(page.getByText(/You have chosen 👍/)).toBeVisible({
+    timeout: 15000,
+  });
   await page.getByRole("button", { name: /^Create$/ }).click();
 });
 
@@ -54,11 +60,14 @@ When("I change its title", async ({ page }) => {
 });
 
 When("I delete my countdown", async ({ page }) => {
+  // The countdown row is an amplify-flex containing the title and a single
+  // (delete) button. Filter rows by the title text, then click that row's
+  // button — robust to sibling ordering.
   const row = page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${currentTitle}`) })
+    .locator(".amplify-flex")
+    .filter({ hasText: currentTitle })
     .first();
-  await row.locator("..").getByRole("button").last().click({ timeout: 15000 });
+  await row.getByRole("button").last().click({ timeout: 15000 });
 });
 
 Then("I should not see my countdown in the list", async ({ page }) => {
