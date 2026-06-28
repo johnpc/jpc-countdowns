@@ -21,7 +21,8 @@ jobs:
           node-version: 20
           cache: "npm"
       - run: npm ci
-      - run: npx ampx generate outputs --app-id d1letrbu1eg8la --branch main
+      - name: Generate amplify_outputs.json (retries on in-progress deploy)
+        run: npm run prod-config
       - name: Lint
         run: npm run lint
       - name: Format check
