@@ -9,7 +9,9 @@ let coverageData;
 try {
   coverageData = JSON.parse(readFileSync(coveragePath, "utf-8"));
 } catch {
-  console.error("Could not read coverage-final.json. Run tests with coverage first.");
+  console.error(
+    "Could not read coverage-final.json. Run tests with coverage first.",
+  );
   process.exit(1);
 }
 
@@ -37,15 +39,18 @@ for (const [filePath, fileData] of Object.entries(coverageData)) {
       }
     }
 
-    const fileBranchCoverage = totalBranches > 0 ? coveredBranches / totalBranches : 1;
+    const fileBranchCoverage =
+      totalBranches > 0 ? coveredBranches / totalBranches : 1;
     const complexity = Math.max(1, Object.keys(branchData).length);
-    const crap = Math.pow(complexity, 2) * Math.pow(1 - fileBranchCoverage, 3) + complexity;
+    const crap =
+      Math.pow(complexity, 2) * Math.pow(1 - fileBranchCoverage, 3) +
+      complexity;
 
     if (crap > CRAP_THRESHOLD) {
       const name = fnMeta.name || "(anonymous)";
       const loc = fnMeta.loc?.start;
       console.error(
-        `CRAP ${crap.toFixed(1)} > ${CRAP_THRESHOLD} in ${filePath}:${loc?.line}:${loc?.column} (${name})`
+        `CRAP ${crap.toFixed(1)} > ${CRAP_THRESHOLD} in ${filePath}:${loc?.line}:${loc?.column} (${name})`,
       );
       hasFailure = true;
     }
@@ -53,7 +58,9 @@ for (const [filePath, fileData] of Object.entries(coverageData)) {
 }
 
 if (hasFailure) {
-  console.error("\nCRAP score check FAILED. Reduce complexity or increase coverage.");
+  console.error(
+    "\nCRAP score check FAILED. Reduce complexity or increase coverage.",
+  );
   process.exit(1);
 } else {
   console.log("CRAP score check passed.");

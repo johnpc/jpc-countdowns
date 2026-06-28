@@ -10,3 +10,5 @@
 dist/
 ios/
 public/apple-app-site-association
+coverage/
+.features-gen/

@@ -28,7 +28,7 @@ export const listCountdowns = async (): Promise<CountdownEntity[]> => {
 };
 
 export const createCountdown = async (
-  countdown: CountdownEntity
+  countdown: CountdownEntity,
 ): Promise<CountdownEntity> => {
   const { data: newCountdown, errors } = await client.models.Countdown.create({
     ...countdown,
@@ -38,7 +38,7 @@ export const createCountdown = async (
 };
 
 export const updateCountdown = async (
-  countdown: CountdownEntity
+  countdown: CountdownEntity,
 ): Promise<CountdownEntity | undefined> => {
   if (!countdown.id) {
     console.log(`Cannot update countdown without id`, { countdown });
@@ -53,7 +53,7 @@ export const updateCountdown = async (
 };
 
 export const deleteCountdown = async (
-  countdown: CountdownEntity
+  countdown: CountdownEntity,
 ): Promise<void> => {
   if (!countdown.id) {
     return;
@@ -63,47 +63,32 @@ export const deleteCountdown = async (
   if (errors) throw new Error(errors.map((e) => e.message).join("\n"));
 };
 
-export const createCountdownListener = (
-  fn: (countdownItem: CountdownEntity) => void
-) => {
-  const listener = client.models.Countdown.onCreate().subscribe({
-    next: async (countdown: Schema["Countdown"]["type"]) => {
-      fn(countdown);
-    },
-    error: (error: Error) => {
-      console.error("Subscription error", error);
-    },
-  });
-  return listener;
+type CountdownObservable = () => {
+  subscribe: (observer: {
+    next: (countdown: Schema["Countdown"]["type"]) => void;
+    error: (error: Error) => void;
+  }) => Subscription;
 };
 
-export const updateCountdownListener = (
-  fn: (countdownItem: CountdownEntity) => void
-) => {
-  const listener = client.models.Countdown.onUpdate().subscribe({
-    next: async (countdown: Schema["Countdown"]["type"]) => {
-      fn(countdown);
-    },
-    error: (error: Error) => {
-      console.error("Subscription error", error);
-    },
-  });
-  return listener;
-};
+const makeListener =
+  (observable: CountdownObservable) =>
+  (fn: (countdownItem: CountdownEntity) => void) =>
+    observable().subscribe({
+      next: (countdown) => fn(countdown),
+      error: (error) => console.error("Subscription error", error),
+    });
 
-export const deleteCountdownListener = (
-  fn: (countdownItem: CountdownEntity) => void
-) => {
-  const listener = client.models.Countdown.onDelete().subscribe({
-    next: async (countdown: Schema["Countdown"]["type"]) => {
-      fn(countdown);
-    },
-    error: (error: Error) => {
-      console.error("Subscription error", error);
-    },
-  });
-  return listener;
-};
+export const createCountdownListener = makeListener(() =>
+  client.models.Countdown.onCreate(),
+);
+
+export const updateCountdownListener = makeListener(() =>
+  client.models.Countdown.onUpdate(),
+);
+
+export const deleteCountdownListener = makeListener(() =>
+  client.models.Countdown.onDelete(),
+);
 
 export const unsubscribeListener = (subscription: Subscription) => {
   return subscription.unsubscribe();
