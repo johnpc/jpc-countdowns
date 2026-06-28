@@ -16,7 +16,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage && node scripts/check-crap.js",
     "test:e2e": "npx bddgen && playwright test",
-    "prod-config": "ampx generate outputs --app-id d1letrbu1eg8la --branch main --profile personal",
+    "prod-config": "node scripts/prod-config.mjs",
     "ios": "npm run prod-config && npm run dev-ios",
     "dev-ios": "npm run build && cap sync && cap copy ios && cap open ios"
   },

@@ -62,7 +62,9 @@ jobs:
           printf '[profile personal]\nregion=us-west-2\n' > ~/.aws/config
 
       - name: Generate amplify_outputs.json from prod backend
-        run: npx ampx generate outputs --app-id d1letrbu1eg8la --branch main --profile personal
+        # Wrapper retries on DeploymentInProgressError — a merge to main kicks
+        # off an Amplify rebuild that races this pull.
+        run: npm run prod-config
 
       - name: Build web and sync to Capacitor iOS
         run: |
