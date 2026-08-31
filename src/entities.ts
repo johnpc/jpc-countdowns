@@ -13,7 +13,6 @@ export type CountdownEntity = {
 };
 
 export const listCountdowns = async (): Promise<CountdownEntity[]> => {
-  console.log({ models: client.models });
   const { data: countdowns, errors } = await client.models.Countdown.list({
     limit: 10000,
   });
@@ -41,8 +40,7 @@ export const updateCountdown = async (
   countdown: CountdownEntity,
 ): Promise<CountdownEntity | undefined> => {
   if (!countdown.id) {
-    console.log(`Cannot update countdown without id`, { countdown });
-    return;
+    throw new Error("Cannot update a countdown without an id");
   }
   const { data: newCountdown, errors } = await client.models.Countdown.update({
     id: countdown.id!,

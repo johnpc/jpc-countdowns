@@ -59,6 +59,8 @@ const mockUnsubscribeListener = vi.fn();
 vi.mock("../entities", () => ({
   listCountdowns: (...args: unknown[]) => mockListCountdowns(...args),
   deleteCountdown: (...args: unknown[]) => mockDeleteCountdown(...args),
+  createCountdown: vi.fn().mockResolvedValue({}),
+  updateCountdown: vi.fn().mockResolvedValue({}),
   createCountdownListener: (...args: unknown[]) =>
     mockCreateCountdownListener(...args),
   updateCountdownListener: (...args: unknown[]) =>
@@ -90,20 +92,13 @@ vi.mock("capacitor-widgetsbridge-plugin", () => ({
   },
 }));
 
-vi.mock("@emoji-mart/data", () => ({
-  default: { categories: [], emojis: {} },
-}));
-vi.mock("@emoji-mart/react", () => ({
-  default: (props: { onEmojiSelect: (e: { native: string }) => void }) => (
-    <button
-      data-testid="emoji-picker"
-      onClick={() => props.onEmojiSelect({ native: "🎉" })}
-    >
+vi.mock("./EmojiPicker", () => ({
+  default: (props: { onSelect: (native: string) => void }) => (
+    <button data-testid="emoji-picker" onClick={() => props.onSelect("🎉")}>
       Pick Emoji
     </button>
   ),
 }));
-vi.mock("emoji-mart", () => ({}));
 
 import Countdowns from "./Countdowns";
 
@@ -205,16 +200,16 @@ describe("Countdowns", () => {
     expect(screen.getByText("Christmas")).toBeInTheDocument();
   });
 
-  it("calls deleteCountdown when delete button clicked", async () => {
+  it("removes the row instantly and calls deleteCountdown on delete click", async () => {
     renderCountdowns();
     await waitFor(() => {
       expect(screen.getByText("Christmas")).toBeInTheDocument();
     });
-    const deleteButtons = screen
-      .getAllByRole("button")
-      .filter((btn) => btn.querySelector("svg") !== null);
-    fireEvent.click(deleteButtons[0]);
-    expect(mockDeleteCountdown).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Delete Christmas" }));
+    // Optimistic: the row is gone before any network resolution…
+    expect(screen.queryByText("Christmas")).not.toBeInTheDocument();
+    // …and the server delete follows (async — it resolves the real id first).
+    await waitFor(() => expect(mockDeleteCountdown).toHaveBeenCalled());
   });
 
   it("subscribes to create/update/delete listeners", async () => {

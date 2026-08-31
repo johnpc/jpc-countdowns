@@ -115,14 +115,15 @@ describe("updateCountdown", () => {
     expect(result).toEqual(input);
   });
 
-  it("returns undefined if no id", async () => {
-    const result = await updateCountdown({
-      emoji: "x",
-      title: "x",
-      date: "x",
-      hexColor: "x",
-    });
-    expect(result).toBeUndefined();
+  it("throws if no id", async () => {
+    await expect(
+      updateCountdown({
+        emoji: "x",
+        title: "x",
+        date: "x",
+        hexColor: "x",
+      }),
+    ).rejects.toThrow("Cannot update a countdown without an id");
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 

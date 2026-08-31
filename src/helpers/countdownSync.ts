@@ -1,4 +1,5 @@
 import { CountdownEntity } from "../entities";
+import { Capacitor } from "@capacitor/core";
 import { WidgetsBridgePlugin } from "capacitor-widgetsbridge-plugin";
 
 export const WIDGET_PREFERENCES_GROUP = "group.com.johncorser.countdowns.prefs";
@@ -15,7 +16,14 @@ export const sortAndFilterFuture = (
     .filter((c) => new Date(c.date).getTime() > now);
 };
 
+/** The widget bridge only exists inside the native shell — no-op on web. */
+export const reloadWidgetTimelines = async (): Promise<void> => {
+  if (!Capacitor.isNativePlatform()) return;
+  await WidgetsBridgePlugin.reloadAllTimelines();
+};
+
 export const setWidgetPreferences = async (entities: CountdownEntity[]) => {
+  if (!Capacitor.isNativePlatform()) return;
   await WidgetsBridgePlugin.setItem({
     group: WIDGET_PREFERENCES_GROUP,
     key: PREFERENCES_KEY,

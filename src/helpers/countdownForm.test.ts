@@ -26,10 +26,19 @@ describe("toDateInputValue", () => {
 });
 
 describe("buildCountdownPayload", () => {
-  it("returns an error when a field is missing", () => {
+  it("returns an error naming each missing field", () => {
     const { error, entity } = buildCountdownPayload({ title: "x" });
-    expect(error).toBe("Ensure all fields are set.");
+    expect(error).toBe("Still needed: a date, a color, an emoji.");
     expect(entity).toBeUndefined();
+  });
+
+  it("names only the missing fields", () => {
+    const { error } = buildCountdownPayload({
+      title: "x",
+      date: new Date(),
+      hexColor: "#fff",
+    });
+    expect(error).toBe("Still needed: an emoji.");
   });
 
   it("returns an entity with an iso date when all fields are set", () => {

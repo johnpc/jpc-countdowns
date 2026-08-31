@@ -1,16 +1,26 @@
 import { useState } from "react";
 import CreateCountdown from "./CreateCountdown";
+import ListState from "./ListState";
 import Settings from "./Settings";
-import { CountdownEntity, deleteCountdown } from "../entities";
-import { sortAndFilterFuture } from "../helpers/countdownSync";
+import Toasts from "./Toasts";
+import { CountdownEntity } from "../entities";
 import { useCountdowns } from "../helpers/useCountdowns";
-import { Button, Divider, Loader, useTheme } from "@aws-amplify/ui-react";
+import { Button, Divider, useTheme } from "@aws-amplify/ui-react";
 import { Add, Settings as SettingsIcon } from "@mui/icons-material";
 import Countdown from "./Countdown";
 
 export default function Countdowns() {
   const { tokens } = useTheme();
-  const { countdowns, loaded, user } = useCountdowns();
+  const {
+    countdowns,
+    loaded,
+    loadFailed,
+    retry,
+    user,
+    addCountdown,
+    editCountdown,
+    removeCountdown,
+  } = useCountdowns();
   const [selectedCountdown, setSelectedCountdown] = useState<CountdownEntity>();
   const [createCountdown, setCreateCountdown] = useState(false);
   const [settings, setSettings] = useState(false);
@@ -19,7 +29,9 @@ export default function Countdowns() {
     return (
       <CreateCountdown
         existingCountdown={selectedCountdown}
-        onCreated={() => {
+        save={addCountdown}
+        update={editCountdown}
+        onDone={() => {
           setCreateCountdown(false);
           setSelectedCountdown(undefined);
         }}
@@ -46,19 +58,22 @@ export default function Countdowns() {
 
   return (
     <>
-      {loaded || countdowns.length ? (
-        sortAndFilterFuture(countdowns).map((c) => (
+      <ListState
+        loading={!loaded && !countdowns.length && !loadFailed}
+        error={loadFailed && !countdowns.length}
+        empty={!countdowns.length}
+        onRetry={retry}
+      >
+        {countdowns.map((c) => (
           <Countdown
             key={c.id}
             countdown={c}
             setCreateCountdown={setCreateCountdown}
             setSelectedCountdown={setSelectedCountdown}
-            deleteCountdown={(countdown) => deleteCountdown(countdown)}
+            deleteCountdown={removeCountdown}
           />
-        ))
-      ) : (
-        <Loader variation="linear" size="large" />
-      )}
+        ))}
+      </ListState>
       {spacedDivider}
       <Button
         isFullWidth
@@ -75,6 +90,7 @@ export default function Countdowns() {
       >
         Settings <SettingsIcon />
       </Button>
+      <Toasts />
     </>
   );
 }

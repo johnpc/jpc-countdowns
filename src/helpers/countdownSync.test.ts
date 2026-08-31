@@ -10,8 +10,18 @@ vi.mock("capacitor-widgetsbridge-plugin", () => ({
   },
 }));
 
-const { sortAndFilterFuture, persistCountdowns, setWidgetPreferences } =
-  await import("./countdownSync");
+// The sync funnel only talks to the widget bridge inside the native shell.
+const mockIsNative = vi.hoisted(() => ({ value: true }));
+vi.mock("@capacitor/core", () => ({
+  Capacitor: { isNativePlatform: () => mockIsNative.value },
+}));
+
+const {
+  sortAndFilterFuture,
+  persistCountdowns,
+  setWidgetPreferences,
+  reloadWidgetTimelines,
+} = await import("./countdownSync");
 
 const future = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString();
 const past = new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString();
@@ -26,6 +36,7 @@ const make = (id: string, date: string) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  mockIsNative.value = true;
 });
 
 describe("sortAndFilterFuture", () => {
@@ -67,5 +78,21 @@ describe("setWidgetPreferences", () => {
       expect.objectContaining({ key: "countdownEntities" }),
     );
     expect(mockReload).toHaveBeenCalled();
+  });
+
+  it("is a no-op on web where the bridge does not exist", async () => {
+    mockIsNative.value = false;
+    await setWidgetPreferences([make("a", future)]);
+    expect(mockSetItem).not.toHaveBeenCalled();
+  });
+});
+
+describe("reloadWidgetTimelines", () => {
+  it("reloads on native and no-ops on web", async () => {
+    await reloadWidgetTimelines();
+    expect(mockReload).toHaveBeenCalledTimes(1);
+    mockIsNative.value = false;
+    await reloadWidgetTimelines();
+    expect(mockReload).toHaveBeenCalledTimes(1);
   });
 });
