@@ -75,3 +75,48 @@ Then("I should not see my countdown in the list", async ({ page }) => {
     timeout: 30000,
   });
 });
+
+// "Immediately" pins the optimistic UX: the row must appear/disappear well
+// under a network round trip (the whole point of the optimistic mutations).
+Then(
+  "I should see my new countdown in the list immediately",
+  async ({ page }) => {
+    await expect(page.getByText(currentTitle, { exact: true })).toBeVisible({
+      timeout: 1500,
+    });
+  },
+);
+
+Then(
+  "I should not see my countdown in the list immediately",
+  async ({ page }) => {
+    await expect(page.getByText(currentTitle, { exact: true })).toHaveCount(0, {
+      timeout: 1500,
+    });
+  },
+);
+
+Then("I should see a delete toast with an Undo button", async ({ page }) => {
+  await expect(page.getByRole("status")).toContainText("Deleted");
+  await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+});
+
+When("I undo the delete", async ({ page }) => {
+  await page.getByRole("button", { name: "Undo" }).click();
+});
+
+When("I try to create a countdown with only a title", async ({ page }) => {
+  await createButton(page).click();
+  await page.locator('input[type="text"]').first().fill("incomplete");
+  await page.getByRole("button", { name: /^Create$/ }).click();
+});
+
+Then(
+  "I should see an inline validation message naming the missing fields",
+  async ({ page }) => {
+    await expect(page.getByRole("alert")).toContainText(
+      /^Still needed: .*an emoji\.$/,
+    );
+    await page.getByRole("button", { name: /^Back$/ }).click();
+  },
+);

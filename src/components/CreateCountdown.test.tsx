@@ -1,221 +1,119 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { ThemeProvider } from "@aws-amplify/ui-react";
 import CreateCountdown from "./CreateCountdown";
 import { CountdownEntity } from "../entities";
 
-const mockCreateCountdown = vi.fn().mockResolvedValue({});
-const mockUpdateCountdown = vi.fn().mockResolvedValue({});
-
-vi.mock("../entities", () => ({
-  createCountdown: (...args: unknown[]) => mockCreateCountdown(...args),
-  updateCountdown: (...args: unknown[]) => mockUpdateCountdown(...args),
-}));
-
-vi.mock("@emoji-mart/data", () => ({
-  default: { categories: [], emojis: {} },
-}));
-vi.mock("@emoji-mart/react", () => ({
-  default: (props: { onEmojiSelect: (e: { native: string }) => void }) => (
-    <button
-      data-testid="emoji-picker"
-      onClick={() => props.onEmojiSelect({ native: "🎉" })}
-    >
+vi.mock("./EmojiPicker", () => ({
+  default: (props: { onSelect: (native: string) => void }) => (
+    <button data-testid="emoji-picker" onClick={() => props.onSelect("🎉")}>
       Pick Emoji
     </button>
   ),
 }));
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.spyOn(window, "alert").mockImplementation(() => {});
-});
+const existingCountdown: CountdownEntity = {
+  id: "1",
+  emoji: "🎄",
+  title: "Christmas",
+  date: "2026-12-25T23:59:59.999Z",
+  hexColor: "#FF0000",
+};
 
-function renderCreateCountdown(props?: {
+function renderForm(props?: {
   existingCountdown?: CountdownEntity;
-  onCreated?: () => void;
+  save?: (draft: Omit<CountdownEntity, "id">) => void;
+  update?: (countdown: CountdownEntity) => void;
+  onDone?: () => void;
 }) {
-  const onCreated = props?.onCreated ?? vi.fn();
-  return {
-    ...render(
-      <ThemeProvider>
-        <CreateCountdown
-          existingCountdown={props?.existingCountdown}
-          onCreated={onCreated}
-        />
-      </ThemeProvider>,
-    ),
-    onCreated,
-  };
+  const save = props?.save ?? vi.fn();
+  const update = props?.update ?? vi.fn();
+  const onDone = props?.onDone ?? vi.fn();
+  render(
+    <ThemeProvider>
+      <CreateCountdown
+        existingCountdown={props?.existingCountdown}
+        save={save}
+        update={update}
+        onDone={onDone}
+      />
+    </ThemeProvider>,
+  );
+  return { save, update, onDone };
 }
 
 describe("CreateCountdown", () => {
   it("renders title, color, date, and emoji fields", () => {
-    renderCreateCountdown();
+    renderForm();
     expect(screen.getByLabelText("Title")).toBeInTheDocument();
     expect(screen.getByLabelText("Color")).toBeInTheDocument();
     expect(screen.getByLabelText("Date")).toBeInTheDocument();
     expect(screen.getByText("Emoji")).toBeInTheDocument();
   });
 
-  it("renders Create button for new countdown", () => {
-    renderCreateCountdown();
+  it("renders Create button for new, Update for existing", () => {
+    renderForm();
     expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
   });
 
-  it("renders Update button for existing countdown", () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
-    expect(screen.getByRole("button", { name: "Update" })).toBeInTheDocument();
-  });
-
-  it("shows alert if fields are missing on submit", () => {
-    renderCreateCountdown();
+  it("shows an inline error naming missing fields on submit", () => {
+    const { save, onDone } = renderForm();
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
-    expect(window.alert).toHaveBeenCalledWith("Ensure all fields are set.");
-    expect(mockCreateCountdown).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Still needed: a title, a date, a color, an emoji.",
+    );
+    expect(save).not.toHaveBeenCalled();
+    expect(onDone).not.toHaveBeenCalled();
   });
 
-  it("calls createCountdown with correct data on submit", async () => {
-    renderCreateCountdown();
-
-    const titleInput = screen.getByLabelText("Title");
-    const colorInput = screen.getByLabelText("Color");
-    const dateInput = screen.getByLabelText("Date");
-
-    fireEvent.change(titleInput, { target: { value: "New Year" } });
-    fireEvent.change(colorInput, { target: { value: "#00FF00" } });
-    fireEvent.change(dateInput, { target: { value: "2026-12-31" } });
-    fireEvent.click(screen.getByTestId("emoji-picker"));
-
+  it("calls save and closes immediately on valid create", async () => {
+    const { save, onDone } = renderForm();
+    fireEvent.change(screen.getByLabelText("Title"), {
+      target: { value: "New Year" },
+    });
+    fireEvent.change(screen.getByLabelText("Color"), {
+      target: { value: "#00ff00" },
+    });
+    fireEvent.change(screen.getByLabelText("Date"), {
+      target: { value: "2030-12-31" },
+    });
+    fireEvent.click(await screen.findByTestId("emoji-picker"));
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
-
-    await waitFor(() => {
-      expect(mockCreateCountdown).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "New Year",
-          emoji: "🎉",
-        }),
-      );
-    });
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "New Year", emoji: "🎉" }),
+    );
+    expect(onDone).toHaveBeenCalled();
   });
 
-  it("calls updateCountdown for existing countdown", async () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
-
+  it("calls update with the id for an existing countdown", () => {
+    const { update, onDone } = renderForm({ existingCountdown });
     fireEvent.click(screen.getByRole("button", { name: "Update" }));
-    await waitFor(() => {
-      expect(mockUpdateCountdown).toHaveBeenCalledWith(
-        expect.objectContaining({ id: "1" }),
-      );
-    });
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: "1" }));
+    expect(onDone).toHaveBeenCalled();
   });
 
-  it("calls onCreated when Back button is clicked", () => {
-    const onCreated = vi.fn();
-    renderCreateCountdown({ onCreated });
+  it("calls onDone when Back is clicked", () => {
+    const { onDone } = renderForm();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(onCreated).toHaveBeenCalled();
+    expect(onDone).toHaveBeenCalled();
   });
 
-  it("shows emoji picker for new countdown", () => {
-    renderCreateCountdown();
-    expect(screen.getByTestId("emoji-picker")).toBeInTheDocument();
+  it("shows emoji picker for new countdown", async () => {
+    renderForm();
+    expect(await screen.findByTestId("emoji-picker")).toBeInTheDocument();
   });
 
-  it("shows Change Emoji button for existing countdown with emoji", () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
-    expect(
-      screen.getByRole("button", { name: "Change Emoji" }),
-    ).toBeInTheDocument();
-  });
-
-  it("shows emoji picker when Change Emoji is clicked", () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
+  it("shows Change Emoji for existing countdown and reopens picker", async () => {
+    renderForm({ existingCountdown });
     fireEvent.click(screen.getByRole("button", { name: "Change Emoji" }));
-    expect(screen.getByTestId("emoji-picker")).toBeInTheDocument();
+    expect(await screen.findByTestId("emoji-picker")).toBeInTheDocument();
   });
 
-  it("displays descriptive text when title is set", () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
+  it("displays chosen values for an existing countdown", () => {
+    renderForm({ existingCountdown });
     expect(screen.getByText(/Title Added/)).toBeInTheDocument();
-  });
-
-  it("displays color description when hexColor is set", () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
     expect(screen.getByText(/You have chosen #FF0000/)).toBeInTheDocument();
-  });
-
-  it("displays date description when date is set", () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
-    expect(screen.getByText(/You have chosen.*Dec.*2026/)).toBeInTheDocument();
-  });
-
-  it("displays emoji description when emoji is set", () => {
-    renderCreateCountdown({
-      existingCountdown: {
-        id: "1",
-        emoji: "🎄",
-        title: "Christmas",
-        date: "2026-12-25T23:59:59.999Z",
-        hexColor: "#FF0000",
-      },
-    });
     expect(screen.getByText(/You have chosen 🎄/)).toBeInTheDocument();
+    expect(screen.getByText(/You have chosen.*Dec.*2026/)).toBeInTheDocument();
   });
 });

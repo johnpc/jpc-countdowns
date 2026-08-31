@@ -61,6 +61,7 @@ export default function WidgetSettingsCard(props: {
       <SelectField
         label="Update Widget Countdown"
         descriptiveText="The countdown to appear on Home Screen widget"
+        value={selectedWidgetCountdown?.id}
         onChange={(e) =>
           handleUpdateWidget(
             props.countdowns.find((c) => c.id == e.target.value)!,

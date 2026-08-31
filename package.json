@@ -14,8 +14,9 @@
     "prepare": "husky install",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage && node scripts/check-crap.js",
+    "test:coverage": "rm -rf coverage node_modules/.vite && vitest run --coverage && node scripts/check-crap.js",
     "test:e2e": "npx bddgen && playwright test",
+    "quality": "npm run lint && npm run format:check && npm run check:lines && npm run test:coverage && npm run build",
     "prod-config": "node scripts/prod-config.mjs",
     "ios": "npm run prod-config && npm run dev-ios",
     "dev-ios": "npm run build && cap sync && cap copy ios && cap open ios"

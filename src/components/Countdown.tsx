@@ -11,10 +11,6 @@ export default function Countdown(props: {
 }) {
   const { tokens } = useTheme();
 
-  const onDeleteCountdownClick = async (countdown: CountdownEntity) => {
-    await props.deleteCountdown(countdown);
-  };
-
   const countdownDate = new Date(props.countdown.date);
   const isToday = countdownDate.toDateString() === new Date().toDateString();
   const formattedDateString = isToday
@@ -64,7 +60,8 @@ export default function Countdown(props: {
           <Button
             variation="link"
             color={tokens.colors.overlay[50]}
-            onClick={() => onDeleteCountdownClick(props.countdown)}
+            onClick={() => props.deleteCountdown(props.countdown)}
+            ariaLabel={`Delete ${props.countdown.title}`}
           >
             <Delete />
           </Button>

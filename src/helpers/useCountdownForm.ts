@@ -1,16 +1,19 @@
 import { ChangeEvent, useState } from "react";
-import { CountdownEntity, createCountdown, updateCountdown } from "../entities";
+import { CountdownEntity } from "../entities";
 import { buildCountdownPayload, parseInputDate } from "./countdownForm";
 
 type Change = ChangeEvent<HTMLInputElement>;
 
 /**
  * Form state + create/update submission for a single countdown. The component
- * stays render-only; all validation and persistence lives here.
+ * stays render-only; all validation lives here. Submission is optimistic —
+ * the save/update callbacks apply instantly and the form closes immediately.
  */
 export const useCountdownForm = (
   existing: CountdownEntity | undefined,
-  onCreated: () => void,
+  save: (draft: Omit<CountdownEntity, "id">) => void,
+  update: (countdown: CountdownEntity) => void,
+  onDone: () => void,
 ) => {
   const [title, setTitle] = useState(existing?.title);
   const [date, setDate] = useState<Date | undefined>(
@@ -19,29 +22,30 @@ export const useCountdownForm = (
   const [hexColor, setHexColor] = useState(existing?.hexColor);
   const [emoji, setEmoji] = useState(existing?.emoji);
   const [showEmojiSelector, setShowEmojiSelector] = useState(!existing?.emoji);
+  const [error, setError] = useState<string>();
 
   const selectEmoji = (native: string) => {
     setEmoji(native);
     setShowEmojiSelector(false);
   };
 
-  const submit = async () => {
-    const { entity, error } = buildCountdownPayload({
+  const submit = () => {
+    const { entity, error: validationError } = buildCountdownPayload({
       title,
       date,
       hexColor,
       emoji,
     });
-    if (error || !entity) {
-      alert(error);
+    if (validationError || !entity) {
+      setError(validationError);
       return;
     }
-    if (!existing?.id) {
-      await createCountdown(entity);
+    if (existing?.id) {
+      update({ id: existing.id, ...entity });
     } else {
-      await updateCountdown({ id: existing.id, ...entity });
+      save(entity);
     }
-    onCreated();
+    onDone();
   };
 
   return {
@@ -55,6 +59,7 @@ export const useCountdownForm = (
     showEmojiSelector,
     setShowEmojiSelector,
     selectEmoji,
+    error,
     submit,
   };
 };

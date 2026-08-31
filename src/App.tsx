@@ -11,12 +11,7 @@ import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
-import { Hub } from "aws-amplify/utils";
 import { attemptAutoLogin } from "./helpers/autoLogin";
-
-Hub.listen("auth", ({ payload }) => {
-  console.log(`auth event: ${payload.event}`);
-});
 
 function App() {
   return (

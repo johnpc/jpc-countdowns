@@ -1,5 +1,6 @@
 import { CountdownEntity, createCountdown } from "../entities";
 import { getUpcomingHoliday, majorHolidaySpecs } from "./majorHolidays";
+import { showToast } from "./toast";
 
 const normalize = (title: string) => title.toLowerCase().trim();
 
@@ -22,8 +23,16 @@ export const createCountdownsForMajorHolidays = async (
   existingCountdowns: CountdownEntity[],
 ) => {
   const newCountdowns = upcomingHolidayCountdowns(existingCountdowns);
-  for (const holiday of newCountdowns) {
-    await createCountdown(holiday);
+  if (!newCountdowns.length) {
+    showToast("All major holidays are already in your list.");
+    return;
   }
-  alert(`Created ${newCountdowns.length} countdowns`);
+  const results = await Promise.allSettled(newCountdowns.map(createCountdown));
+  const failed = results.filter((r) => r.status === "rejected").length;
+  showToast(
+    failed
+      ? `Created ${newCountdowns.length - failed} countdowns (${failed} failed — try again).`
+      : `Created ${newCountdowns.length} holiday countdowns.`,
+    failed ? { variation: "error" } : undefined,
+  );
 };

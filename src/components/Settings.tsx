@@ -12,6 +12,8 @@ import {
 import { AuthUser, signOut } from "aws-amplify/auth";
 import { CountdownEntity } from "../entities";
 import { createCountdownsForMajorHolidays } from "../helpers/createCountdownsForMajorHolidays";
+import { showToast } from "../helpers/toast";
+import Toasts from "./Toasts";
 import WidgetSettingsCard from "./WidgetSettingsCard";
 
 function SignOutButton() {
@@ -32,7 +34,7 @@ export default function SettingsPage(props: {
   onFinished: () => void;
 }) {
   const { tokens } = useTheme();
-  const handleSuccess = () => alert("success!");
+  const handleSuccess = () => showToast("Saved ✅");
   const spacedDivider = (
     <Divider
       marginBottom={tokens.space.medium}
@@ -76,6 +78,7 @@ export default function SettingsPage(props: {
           </Link>{" "}
         </Text>
       </Card>
+      <Toasts />
     </View>
   );
 }

@@ -1,3 +1,12 @@
+/**
+ * CRAP gate: CRAP = complexity^2 * (1 - coverage)^3 + complexity, per FUNCTION.
+ *
+ * Complexity is cyclomatic: 1 + the number of branch decision points located
+ * inside the function's span. Coverage is that same function's branch coverage
+ * (or its hit-count when it has no branches). Computing both per-function is
+ * the actual CRAP definition — a file-level proxy misattributes one hot spot
+ * to every function in the file.
+ */
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
@@ -15,36 +24,58 @@ try {
   process.exit(1);
 }
 
+const contains = (span, loc) =>
+  loc &&
+  span.start &&
+  span.end &&
+  (loc.start.line > span.start.line ||
+    (loc.start.line === span.start.line &&
+      loc.start.column >= span.start.column)) &&
+  (loc.start.line < span.end.line ||
+    (loc.start.line === span.end.line && loc.start.column <= span.end.column));
+
+const spanSize = (span) =>
+  (span.end.line - span.start.line) * 1000 +
+  (span.end.column - span.start.column);
+
 let hasFailure = false;
 
 for (const [filePath, fileData] of Object.entries(coverageData)) {
-  const fnMap = fileData.fnMap;
-  const fnCoverage = fileData.f;
+  const { fnMap, f: fnHits, branchMap, b: branchHits } = fileData;
+
+  // Attribute each branch to its INNERMOST enclosing function — otherwise an
+  // outer function absorbs every branch of its nested callbacks.
+  const owner = {};
+  for (const [branchKey, branchMeta] of Object.entries(branchMap)) {
+    let best = null;
+    for (const [fnKey, fnMeta] of Object.entries(fnMap)) {
+      if (!contains(fnMeta.loc ?? {}, branchMeta.loc ?? branchMeta)) continue;
+      if (!best || spanSize(fnMap[best].loc) > spanSize(fnMeta.loc)) {
+        best = fnKey;
+      }
+    }
+    if (best !== null) owner[branchKey] = best;
+  }
 
   for (const [fnKey, fnMeta] of Object.entries(fnMap)) {
-    const hits = fnCoverage[fnKey];
-    const coverage = hits > 0 ? 1 : 0;
-    // Estimate complexity as 1 (no branch data per-function in Istanbul)
-    // Use branch coverage at file level as proxy
-    const branchData = fileData.branchMap;
-    const branchCoverage = fileData.b;
-
-    let totalBranches = 0;
+    let branches = 0;
     let coveredBranches = 0;
-    for (const [branchKey, branchMeta] of Object.entries(branchData)) {
-      const locations = branchCoverage[branchKey];
-      for (const loc of locations) {
-        totalBranches++;
-        if (loc > 0) coveredBranches++;
+    for (const branchKey of Object.keys(branchMap)) {
+      if (owner[branchKey] !== fnKey) continue;
+      for (const hits of branchHits[branchKey]) {
+        branches++;
+        if (hits > 0) coveredBranches++;
       }
     }
 
-    const fileBranchCoverage =
-      totalBranches > 0 ? coveredBranches / totalBranches : 1;
-    const complexity = Math.max(1, Object.keys(branchData).length);
+    const complexity = 1 + branches;
+    const coverage = branches
+      ? coveredBranches / branches
+      : fnHits[fnKey] > 0
+        ? 1
+        : 0;
     const crap =
-      Math.pow(complexity, 2) * Math.pow(1 - fileBranchCoverage, 3) +
-      complexity;
+      Math.pow(complexity, 2) * Math.pow(1 - coverage, 3) + complexity;
 
     if (crap > CRAP_THRESHOLD) {
       const name = fnMeta.name || "(anonymous)";

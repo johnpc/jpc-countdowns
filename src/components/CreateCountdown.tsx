@@ -4,22 +4,27 @@ import { useCountdownForm } from "../helpers/useCountdownForm";
 import {
   Button,
   Divider,
-  Label,
   Text,
   TextField,
   useTheme,
   View,
 } from "@aws-amplify/ui-react";
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
+import EmojiField from "./EmojiField";
 
 export default function CreateCountdown(props: {
   existingCountdown?: CountdownEntity;
-  onCreated: () => void;
+  save: (draft: Omit<CountdownEntity, "id">) => void;
+  update: (countdown: CountdownEntity) => void;
+  onDone: () => void;
 }) {
   const { tokens } = useTheme();
   const existing = props.existingCountdown;
-  const form = useCountdownForm(existing, props.onCreated);
+  const form = useCountdownForm(
+    existing,
+    props.save,
+    props.update,
+    props.onDone,
+  );
 
   const spacedDivider = (
     <Divider
@@ -63,30 +68,27 @@ export default function CreateCountdown(props: {
         onChange={form.onDateChange}
       />
       {spacedDivider}
-      <Label>Emoji</Label>
-      <Text>
-        {form.emoji ? `You have chosen ${form.emoji}` : "Select an emoji"}
-      </Text>
-      {form.showEmojiSelector ? (
-        <Picker
-          label="Emoji"
-          data={data}
-          onEmojiSelect={(s: { native: string }) => form.selectEmoji(s.native)}
-        />
-      ) : (
-        <Button
-          margin={tokens.space.small}
-          onClick={() => form.setShowEmojiSelector(true)}
-        >
-          Change Emoji
-        </Button>
-      )}
+      <EmojiField
+        emoji={form.emoji}
+        showSelector={form.showEmojiSelector}
+        onOpenSelector={() => form.setShowEmojiSelector(true)}
+        onSelect={form.selectEmoji}
+      />
       {spacedDivider}
+      {form.error && (
+        <Text
+          color={tokens.colors.red[60]}
+          marginBottom={tokens.space.small}
+          role="alert"
+        >
+          {form.error}
+        </Text>
+      )}
       <Button variation="primary" isFullWidth onClick={form.submit}>
         {existing ? "Update" : "Create"}
       </Button>
       {spacedDivider}
-      <Button variation="link" isFullWidth onClick={props.onCreated}>
+      <Button variation="link" isFullWidth onClick={props.onDone}>
         Back
       </Button>
     </View>

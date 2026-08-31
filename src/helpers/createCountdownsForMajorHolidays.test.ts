@@ -5,13 +5,17 @@ vi.mock("../entities", () => ({
   createCountdown: vi.fn().mockResolvedValue({}),
 }));
 
+const mockShowToast = vi.fn();
+vi.mock("./toast", () => ({
+  showToast: (...args: unknown[]) => mockShowToast(...args),
+}));
+
 const { createCountdownsForMajorHolidays } =
   await import("./createCountdownsForMajorHolidays");
 const { createCountdown } = await import("../entities");
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.spyOn(window, "alert").mockImplementation(() => {});
 });
 
 describe("createCountdownsForMajorHolidays", () => {
@@ -52,9 +56,37 @@ describe("createCountdownsForMajorHolidays", () => {
     expect(createCountdown).toHaveBeenCalledTimes(12);
   });
 
-  it("shows an alert with the count of created countdowns", async () => {
+  it("shows a toast with the count of created countdowns", async () => {
     await createCountdownsForMajorHolidays([]);
-    expect(window.alert).toHaveBeenCalledWith("Created 13 countdowns");
+    expect(mockShowToast).toHaveBeenCalledWith(
+      "Created 13 holiday countdowns.",
+      undefined,
+    );
+  });
+
+  it("shows an error toast when some creates fail", async () => {
+    vi.mocked(createCountdown).mockRejectedValueOnce(new Error("boom"));
+    await createCountdownsForMajorHolidays([]);
+    expect(mockShowToast).toHaveBeenCalledWith(
+      "Created 12 countdowns (1 failed — try again).",
+      { variation: "error" },
+    );
+  });
+
+  it("shows an info toast when nothing is missing", async () => {
+    const all = (await import("./majorHolidays")).majorHolidaySpecs.map(
+      (h) => ({
+        title: h.title,
+        emoji: h.emoji,
+        hexColor: h.hexColor,
+        date: "",
+      }),
+    );
+    await createCountdownsForMajorHolidays(all);
+    expect(createCountdown).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      "All major holidays are already in your list.",
+    );
   });
 
   it("passes correct shape to createCountdown", async () => {

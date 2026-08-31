@@ -31,8 +31,14 @@ export const buildCountdownPayload = (
   draft: CountdownDraft,
 ): { entity?: Omit<CountdownEntity, "id">; error?: string } => {
   const { title, date, hexColor, emoji } = draft;
+  const missing = [
+    !title && "a title",
+    !date && "a date",
+    !hexColor && "a color",
+    !emoji && "an emoji",
+  ].filter((m): m is string => Boolean(m));
   if (!title || !date || !hexColor || !emoji) {
-    return { error: "Ensure all fields are set." };
+    return { error: `Still needed: ${missing.join(", ")}.` };
   }
   return { entity: { title, date: date.toISOString(), hexColor, emoji } };
 };

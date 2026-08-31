@@ -2,11 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ThemeProvider } from "@aws-amplify/ui-react";
 
-const { mockSignIn, hubState, authState } = vi.hoisted(() => ({
+const { mockSignIn, authState } = vi.hoisted(() => ({
   mockSignIn: vi.fn().mockResolvedValue({}),
-  hubState: {
-    callback: null as ((data: { payload: { event: string } }) => void) | null,
-  },
   authState: {
     Header: null as React.ComponentType | null,
     Footer: null as React.ComponentType | null,
@@ -22,19 +19,11 @@ vi.mock("aws-amplify/auth", () => ({
   }),
 }));
 
-vi.mock("aws-amplify/utils", () => ({
-  Hub: {
-    listen: (
-      _channel: string,
-      cb: (data: { payload: { event: string } }) => void,
-    ) => {
-      hubState.callback = cb;
-    },
-  },
-}));
-
 vi.mock("@capacitor/core", () => ({
-  Capacitor: { getPlatform: vi.fn().mockReturnValue("web") },
+  Capacitor: {
+    getPlatform: vi.fn().mockReturnValue("web"),
+    isNativePlatform: vi.fn().mockReturnValue(false),
+  },
 }));
 
 vi.mock("@capacitor/app", () => ({
@@ -123,32 +112,6 @@ describe("App", () => {
     expect(
       screen.getByRole("button", { name: /Create Countdown/i }),
     ).toBeInTheDocument();
-  });
-});
-
-describe("Hub auth listener", () => {
-  it("handles all auth events without throwing", () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
-
-    const events = [
-      "signedIn",
-      "signedOut",
-      "tokenRefresh",
-      "tokenRefresh_failure",
-      "signInWithRedirect",
-      "signInWithRedirect_failure",
-      "customOAuthState",
-      "unknownEvent",
-    ];
-
-    expect(hubState.callback).not.toBeNull();
-    for (const event of events) {
-      expect(() => hubState.callback!({ payload: { event } })).not.toThrow();
-    }
-
-    consoleSpy.mockRestore();
-    infoSpy.mockRestore();
   });
 });
 
