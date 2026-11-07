@@ -31,6 +31,7 @@ jobs:
     # ships Xcode 16 and uploads are rejected with "must be built with the iOS
     # 26 SDK". macos-26 has Xcode 26 as its default toolchain.
     runs-on: [self-hosted, mac-mini]
+    timeout-minutes: 60
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
@@ -90,24 +91,18 @@ jobs:
           # CFBundleVersion (unchanged even if MARKETING_VERSION is bumped on conflict).
           echo "BUILD_NUM=$BUILD_NUM" >> "$GITHUB_ENV"
 
+      - name: Prepare CI signing (manual, CI keychain)
+        env:
+          CI_KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
+        run: |
+          # Runner jobs run in the system launchd context, where Xcode's automatic
+          # signing can't see or write a keychain. Sign manually with the CI
+          # keychain's Apple Distribution identity (see ~/ci-signing/ios_manual_signing.py).
+          security unlock-keychain -p "$CI_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/ci-signing.keychain-db"
+          python3 ~/ci-signing/ios_manual_signing.py apply "$PROJECT" --export-options /tmp/ExportOptions.plist
+
       - name: Archive and upload (auto-bump version on conflict)
         run: |
-          cat > /tmp/ExportOptions.plist << 'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store-connect</string>
-              <key>destination</key>
-              <string>upload</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-              <key>teamID</key>
-              <string>${{ secrets.TEAM_ID }}</string>
-          </dict>
-          </plist>
-          PLIST
 
           archive_and_upload() {
             xcodebuild archive \
@@ -115,10 +110,6 @@ jobs:
               -scheme "$SCHEME" \
               -destination "generic/platform=iOS" \
               -archivePath ~/Desktop/Countdowns.xcarchive \
-              -allowProvisioningUpdates \
-              -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-              -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
-              -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \
               -quiet
 
             xcodebuild -exportArchive \
@@ -135,6 +126,7 @@ jobs:
 
           if echo "$OUTPUT" | grep -qi "version.*already exists\|already been uploaded\|redundant binary\|train.*closed\|higher version"; then
             echo "⚠️ Version conflict, bumping patch version..."
+            python3 ~/ci-signing/ios_manual_signing.py revert "$PROJECT"
             # The project has multiple MARKETING_VERSION entries (App + widget
             # targets). Pick the HIGHEST as the source of truth — grabbing the
             # first match would catch the widget's stale version and bump below
@@ -156,6 +148,7 @@ jobs:
             git add "$PROJECT/project.pbxproj"
             git commit -m "chore(ios): bump version to $NEW_VERSION [skip ci]"
             git push origin main
+            python3 ~/ci-signing/ios_manual_signing.py apply "$PROJECT" --export-options /tmp/ExportOptions.plist
 
             rm -rf ~/Desktop/Countdowns.xcarchive ~/Desktop/export
             archive_and_upload
@@ -178,7 +171,7 @@ jobs:
           issuer_id = os.environ["ASC_ISSUER_ID"]
           bundle_id = os.environ["BUNDLE_ID"]
           build_num = os.environ["BUILD_NUM"]
-          key_path = f"/Users/runner/private_keys/AuthKey_{key_id}.p8"
+          key_path = os.path.expanduser(f"~/private_keys/AuthKey_{key_id}.p8")
           BASE = "https://api.appstoreconnect.apple.com/v1"
 
           def b64url(data):
@@ -259,3 +252,7 @@ jobs:
               print(f"  attached build {build_num} to external group '{name}'")
           print(f"Done: distributed build {build_num} to {len(groups)} external group(s).")
           EOF
+
+      - name: Revert CI signing
+        if: always()
+        run: python3 ~/ci-signing/ios_manual_signing.py revert "$PROJECT"
