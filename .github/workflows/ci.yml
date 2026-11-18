@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 26
           cache: "npm"
       - run: npm ci
       - name: Generate amplify_outputs.json (retries on in-progress deploy)
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 26
           # No setup-node cache on the self-hosted Mac mini: ~/.npm persists there.
       - run: npm ci
       - name: Generate amplify_outputs.json (retries on in-progress deploy)
