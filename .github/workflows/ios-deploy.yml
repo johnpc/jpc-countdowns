@@ -1,5 +1,10 @@
 name: iOS Deploy
 
+# Shared Capacitor deploy (johnpc/ci-workflows): web build + cap sync, launch smoke
+# in a fresh simulator, CI-keychain signing, archive, upload, external TestFlight.
+# DEPLOY_PAT (via secrets: inherit) checks out and opens the version-bump PR, so
+# that PR runs CI (`test`, `ios-launch`) and auto-merges into the protected main.
+# Never submits for App Store review.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -9,273 +14,18 @@ on:
 
 permissions:
   contents: write
-
-# Only one deploy at a time. A second trigger (e.g. a manual dispatch landing
-# alongside the auto workflow_run) queues behind the first instead of racing it
-# and uploading a duplicate build for the same commit.
-concurrency:
-  group: ios-deploy
-  cancel-in-progress: false
-
-env:
-  SCHEME: App
-  # Capacitor 6 uses CocoaPods, so we archive the WORKSPACE (not the project).
-  WORKSPACE: ios/App/App.xcworkspace
-  PROJECT: ios/App/App.xcodeproj
-  BUNDLE_ID: com.johncorser.countdowns
+  pull-requests: write
+  actions: write
 
 jobs:
   deploy:
-    name: Deploy to App Store Connect
-    # App Store Connect requires the iOS 26 SDK (Xcode 26); the macos-15 image
-    # ships Xcode 16 and uploads are rejected with "must be built with the iOS
-    # 26 SDK". macos-26 has Xcode 26 as its default toolchain.
-    runs-on: [self-hosted, mac-mini]
-    timeout-minutes: 60
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          # Use an admin PAT (DEPLOY_PAT) so the auto-bump commit can push to
-          # the protected main branch. The repo owner is an admin and
-          # enforce_admins is off, so this push bypasses the required CI check
-          # while PRs from branches stay gated. Falls back to GITHUB_TOKEN if
-          # the PAT isn't configured (upload still works; only the bump push
-          # would be blocked).
-          token: ${{ secrets.DEPLOY_PAT || secrets.GITHUB_TOKEN }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 26
-          # No setup-node cache on the self-hosted Mac mini: ~/.npm persists there, and saving it was a ~1.8 GB upload per run.
-
-      - run: npm ci
-
-      - name: Configure AWS "personal" profile
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          mkdir -p ~/.aws
-          printf '[personal]\naws_access_key_id=%s\naws_secret_access_key=%s\n' \
-            "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
-          printf '[profile personal]\nregion=us-west-2\n' > ~/.aws/config
-
-      - name: Generate amplify_outputs.json from prod backend
-        # Wrapper retries on DeploymentInProgressError — a merge to main kicks
-        # off an Amplify rebuild that races this pull.
-        run: npm run prod-config
-
-      - name: Build web and sync to Capacitor iOS
-        run: |
-          npm run build
-          npx cap sync ios
-
-      - name: Install CocoaPods
-        working-directory: ios/App
-        run: pod install --repo-update
-
-      # Gate the archive on the app actually launching. CI's ios-launch job
-      # already runs this on PRs and main, but this job also runs on a manual
-      # dispatch (which skips CI) and archives a fresh checkout of main, so the
-      # smoke must run on THIS tree right before it is archived. 1.0.12 shipped
-      # crashing on launch (iOS 27, no UIScene manifest) with every check green.
-      - name: iOS launch smoke (fresh simulator, must stay up)
-        env:
-          SMOKE_WEB_BUILD: "0"
-          SMOKE_OUT: smoke-results
-        run: bash scripts/ios-launch-smoke.sh
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: ios-launch-smoke
-          # The smoke's DerivedData lives under smoke-results/ too; keep it out.
-          path: |
-            smoke-results/
-            !smoke-results/DerivedData/
-          retention-days: 7
-
-      - name: Write App Store Connect API key
-        run: |
-          mkdir -p ~/private_keys
-          echo "${{ secrets.ASC_KEY_CONTENT }}" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
-
-      - name: Increment build number
-        working-directory: ios/App
-        run: |
-          BUILD_NUM=$(date +%Y%m%d%H%M%S)
-          agvtool new-version -all $BUILD_NUM
-          echo "Set build number to $BUILD_NUM"
-          # Export so the external-beta step can find this exact build by its
-          # CFBundleVersion (unchanged even if MARKETING_VERSION is bumped on conflict).
-          echo "BUILD_NUM=$BUILD_NUM" >> "$GITHUB_ENV"
-
-      - name: Prepare CI signing (manual, CI keychain)
-        env:
-          CI_KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
-        run: |
-          # Runner jobs run in the system launchd context, where Xcode's automatic
-          # signing can't see or write a keychain. Sign manually with the CI
-          # keychain's Apple Distribution identity (see ~/ci-signing/ios_manual_signing.py).
-          # Export options, archive and export dir live in $RUNNER_TEMP (unique per job):
-          # fixed /tmp or ~/Desktop paths get overwritten by other apps' deploys on the mini.
-          security unlock-keychain -p "$CI_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/ci-signing.keychain-db"
-          python3 ~/ci-signing/ios_manual_signing.py apply "$PROJECT" --export-options "$RUNNER_TEMP/ExportOptions.plist"
-
-      - name: Archive and upload (auto-bump version on conflict)
-        run: |
-
-          archive_and_upload() {
-            xcodebuild archive \
-              -workspace "$WORKSPACE" \
-              -scheme "$SCHEME" \
-              -destination "generic/platform=iOS" \
-              -archivePath "$RUNNER_TEMP/Countdowns.xcarchive" \
-              -quiet
-
-            xcodebuild -exportArchive \
-              -archivePath "$RUNNER_TEMP/Countdowns.xcarchive" \
-              -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-              -exportPath "$RUNNER_TEMP/export" \
-              -allowProvisioningUpdates \
-              -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-              -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
-              -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} 2>&1
-          }
-
-          OUTPUT=$(archive_and_upload) && echo "$OUTPUT" && exit 0
-
-          if echo "$OUTPUT" | grep -qi "version.*already exists\|already been uploaded\|redundant binary\|train.*closed\|higher version"; then
-            echo "⚠️ Version conflict, bumping patch version..."
-            python3 ~/ci-signing/ios_manual_signing.py revert "$PROJECT"
-            # The project has multiple MARKETING_VERSION entries (App + widget
-            # targets). Pick the HIGHEST as the source of truth — grabbing the
-            # first match would catch the widget's stale version and bump below
-            # the live App Store version. Then set EVERY entry to the new value
-            # so the app and its extension stay in lockstep (App Store rejects a
-            # mismatch).
-            CURRENT=$(grep 'MARKETING_VERSION' "$PROJECT/project.pbxproj" \
-              | sed 's/.*= *\(.*\);/\1/' | sort -V | tail -1)
-            MAJOR=$(echo "$CURRENT" | cut -d. -f1)
-            MINOR=$(echo "$CURRENT" | cut -d. -f2)
-            PATCH=$(echo "$CURRENT" | cut -d. -f3)
-            PATCH=${PATCH:-0}
-            NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-            sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = ${NEW_VERSION};/g" "$PROJECT/project.pbxproj"
-            echo "Bumped highest version $CURRENT → $NEW_VERSION (all targets)"
-
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add "$PROJECT/project.pbxproj"
-            git commit -m "chore(ios): bump version to $NEW_VERSION [skip ci]"
-            git push origin main
-            python3 ~/ci-signing/ios_manual_signing.py apply "$PROJECT" --export-options "$RUNNER_TEMP/ExportOptions.plist"
-
-            rm -rf "$RUNNER_TEMP/Countdowns.xcarchive" "$RUNNER_TEMP/export"
-            archive_and_upload
-          else
-            echo "$OUTPUT"
-            exit 1
-          fi
-
-      - name: Distribute to external beta testers
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          BUNDLE_ID: ${{ env.BUNDLE_ID }}
-        run: |
-          python3 - << 'EOF'
-          import json, time, os, subprocess, tempfile, base64, urllib.request, urllib.error, ssl
-          ctx = ssl.create_default_context()
-
-          key_id = os.environ["ASC_KEY_ID"]
-          issuer_id = os.environ["ASC_ISSUER_ID"]
-          bundle_id = os.environ["BUNDLE_ID"]
-          build_num = os.environ["BUILD_NUM"]
-          key_path = os.path.expanduser(f"~/private_keys/AuthKey_{key_id}.p8")
-          BASE = "https://api.appstoreconnect.apple.com/v1"
-
-          def b64url(data):
-              return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
-
-          def token():
-              header = b64url(json.dumps({"alg":"ES256","kid":key_id,"typ":"JWT"}).encode())
-              now = int(time.time())
-              payload = b64url(json.dumps({"iss":issuer_id,"iat":now,"exp":now+1200,"aud":"appstoreconnect-v1"}).encode())
-              signing_input = f"{header}.{payload}".encode()
-              with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as tf:
-                  tf.write(signing_input); tf.flush()
-                  der = subprocess.run(["openssl","dgst","-sha256","-sign",key_path,tf.name],
-                                       capture_output=True).stdout
-              def parse_der_int(data, offset):
-                  assert data[offset] == 0x02
-                  length = data[offset+1]
-                  value = data[offset+2:offset+2+length]
-                  while len(value) > 32 and value[0] == 0:
-                      value = value[1:]
-                  value = b'\x00' * (32 - len(value)) + value
-                  return value, offset + 2 + length
-              assert der[0] == 0x30
-              r, off = parse_der_int(der, 2)
-              s, _ = parse_der_int(der, off)
-              return f"{header}.{payload}.{b64url(r + s)}"
-
-          def api(path, method="GET", body=None):
-              data = json.dumps(body).encode() if body is not None else None
-              req = urllib.request.Request(f"{BASE}{path}", data=data, method=method,
-                  headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"})
-              try:
-                  resp = urllib.request.urlopen(req, context=ctx)
-                  raw = resp.read()
-                  return json.loads(raw) if raw else {}
-              except urllib.error.HTTPError as e:
-                  print(f"  HTTP {e.code} on {method} {path}: {e.read().decode()}")
-                  raise
-
-          # 1) Resolve the app by bundle id.
-          apps = api(f"/apps?filter[bundleId]={bundle_id}").get("data", [])
-          if not apps:
-              raise SystemExit(f"No app found for bundle id {bundle_id}")
-          app_id = apps[0]["id"]
-
-          # 2) Find OUR build (match this run's CFBundleVersion) and wait for processing.
-          build = None
-          for _ in range(40):  # ~20 min max
-              builds = api(f"/builds?filter[app]={app_id}&filter[version]={build_num}"
-                           "&limit=1&include=preReleaseVersion").get("data", [])
-              if builds:
-                  state = builds[0]["attributes"].get("processingState")
-                  print(f"  build {build_num}: {state}")
-                  if state == "VALID":
-                      build = builds[0]; break
-                  if state in ("INVALID", "FAILED"):
-                      raise SystemExit(f"Build processing {state}")
-              else:
-                  print(f"  build {build_num}: not visible yet")
-              time.sleep(30)
-          if not build:
-              raise SystemExit("Timed out waiting for build to finish processing")
-          build_id = build["id"]
-
-          # 3) Discover external beta groups (isInternalGroup == False).
-          groups = [g for g in api(f"/betaGroups?filter[app]={app_id}&limit=200").get("data", [])
-                    if not g["attributes"].get("isInternalGroup", False)]
-          if not groups:
-              print("No external beta group exists — build uploaded, skipping external distribution.")
-              raise SystemExit(0)
-
-          # 4) Attach the build to each external group. ASC auto-submits for Beta App
-          #    Review on first external assignment.
-          for g in groups:
-              name = g["attributes"].get("name", g["id"])
-              api(f"/betaGroups/{g['id']}/relationships/builds", method="POST",
-                  body={"data": [{"type": "builds", "id": build_id}]})
-              print(f"  attached build {build_num} to external group '{name}'")
-          print(f"Done: distributed build {build_num} to {len(groups)} external group(s).")
-          EOF
-
-      - name: Revert CI signing
-        if: always()
-        run: python3 ~/ci-signing/ios_manual_signing.py revert "$PROJECT"
+    uses: johnpc/ci-workflows/.github/workflows/ios-deploy-capacitor.yml@v1
+    secrets: inherit
+    with:
+      bundle-id: com.johncorser.countdowns
+      archive-name: Countdowns
+      ref: main
+      config-command: npm run prod-config # retries DeploymentInProgressError (Amplify race)
+      external-beta: true
+      bump: patch
