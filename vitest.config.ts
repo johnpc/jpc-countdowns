@@ -29,7 +29,13 @@ export default defineConfig({
     coverage: {
       provider: "istanbul",
       reporter: ["text", "json", "html"],
-      include: ["src/**"],
+      // Source code only. With "src/**", CSS/SVG/JSON files were reported as
+      // untested files; istanbul cannot instrument them, so the provider's
+      // instrumenter.lastFileCoverage() handed back whichever module was
+      // instrumented last (with an identity source map). That module then got a
+      // second, unmapped copy of its functions at 0 hits: an intermittent CRAP
+      // failure that depended on worker scheduling (useCountdownForm.ts, 43.2).
+      include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/vite-env.d.ts", "**/*.d.ts"],
       thresholds: {
         branches: 80,
