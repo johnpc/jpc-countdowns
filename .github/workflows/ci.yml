@@ -43,7 +43,7 @@ jobs:
 
   # Proves the iOS app actually launches. Runs on the same Mac mini (Xcode 27)
   # that archives the App Store build, so a launch regression blocks the merge
-  # instead of reaching TestFlight. See scripts/ios-launch-smoke.sh.
+  # instead of reaching TestFlight. The job name is a required check on main.
   ios-launch:
     runs-on: [self-hosted, mac-mini]
     timeout-minutes: 45
@@ -67,17 +67,8 @@ jobs:
       - name: Install CocoaPods
         working-directory: ios/App
         run: pod install
+      # The shared launch smoke (same script the iOS Deploy job runs): fresh
+      # simulator, scene-manifest check, "WebView loaded", alive, no crash.
+      # Uploads the ios-launch-smoke artifact (screenshot + logs).
       - name: Build, install, launch in a fresh iOS Simulator and verify it stays up
-        env:
-          SMOKE_WEB_BUILD: "0"
-          SMOKE_OUT: smoke-results
-        run: bash scripts/ios-launch-smoke.sh
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: ios-launch-smoke
-          # The smoke's DerivedData lives under smoke-results/ too; keep it out.
-          path: |
-            smoke-results/
-            !smoke-results/DerivedData/
-          retention-days: 7
+        uses: johnpc/ci-workflows/actions/ios-launch-smoke@v1
