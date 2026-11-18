@@ -67,11 +67,17 @@ jobs:
       - name: Install CocoaPods
         working-directory: ios/App
         run: pod install
-      - name: Build, install, launch in iOS Simulator and verify it stays up
+      - name: Build, install, launch in a fresh iOS Simulator and verify it stays up
+        env:
+          SMOKE_WEB_BUILD: "0"
+          SMOKE_OUT: smoke-results
         run: bash scripts/ios-launch-smoke.sh
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: ios-launch-smoke
-          path: smoke-results/
+          # The smoke's DerivedData lives under smoke-results/ too; keep it out.
+          path: |
+            smoke-results/
+            !smoke-results/DerivedData/
           retention-days: 7

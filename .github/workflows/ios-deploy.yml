@@ -76,6 +76,27 @@ jobs:
         working-directory: ios/App
         run: pod install --repo-update
 
+      # Gate the archive on the app actually launching. CI's ios-launch job
+      # already runs this on PRs and main, but this job also runs on a manual
+      # dispatch (which skips CI) and archives a fresh checkout of main, so the
+      # smoke must run on THIS tree right before it is archived. 1.0.12 shipped
+      # crashing on launch (iOS 27, no UIScene manifest) with every check green.
+      - name: iOS launch smoke (fresh simulator, must stay up)
+        env:
+          SMOKE_WEB_BUILD: "0"
+          SMOKE_OUT: smoke-results
+        run: bash scripts/ios-launch-smoke.sh
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: ios-launch-smoke
+          # The smoke's DerivedData lives under smoke-results/ too; keep it out.
+          path: |
+            smoke-results/
+            !smoke-results/DerivedData/
+          retention-days: 7
+
       - name: Write App Store Connect API key
         run: |
           mkdir -p ~/private_keys
