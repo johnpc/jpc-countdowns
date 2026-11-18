@@ -35,3 +35,6 @@ coverage/
 playwright-report/
 test-results/
 .features-gen/
+# iOS launch smoke artifacts
+smoke-results/
+DerivedData/

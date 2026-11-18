@@ -61,6 +61,13 @@ code, never the gate.
 - **Format clean** — Prettier (`npm run format:check`); run `npm run format`
   before committing.
 - **Build must pass** (`npm run build` = `tsc -b` + Vite).
+- **iOS must launch.** CI's `ios-launch` job (`scripts/ios-launch-smoke.sh`, Mac
+  mini runner) builds the Capacitor app for the iPhone 17 Pro simulator,
+  launches it, and fails unless the process is still alive after 20s, Capacitor
+  logged `WebView loaded`, and no crash report was written. Added after the
+  Xcode 27 / iOS 27 SDK made the UIScene lifecycle mandatory and every build
+  crashed at launch while web CI stayed green. The app uses `SceneDelegate.swift`
+  - `UIApplicationSceneManifest`; don't revert to the AppDelegate-only lifecycle.
 - **Acceptance tests are Gherkin** (`.feature` files + steps in `e2e/`), run via
   Playwright + playwright-bdd. Never raw spec code.
 
