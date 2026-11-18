@@ -84,11 +84,10 @@
     "*.{json,md,yml}": "prettier --write"
   },
   "allowScripts": {
-    "esbuild@0.27.2": true,
-    "esbuild@0.25.12": true,
-    "sharp@0.32.6": true,
     "core-js": false,
     "fsevents": false,
-    "@parcel/watcher": false
+    "@parcel/watcher": false,
+    "sharp": true,
+    "esbuild": true
   }
 }
